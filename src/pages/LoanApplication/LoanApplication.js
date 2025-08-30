@@ -7,17 +7,59 @@ const LoanApplication = () => {
   const [loanTerm, setLoanTerm] = useState(14); // days
   const [isSubmitting, setIsSubmitting] = useState(false);
   
-  // Interest rate (5% for this example)
-  const interestRate = 5;
-  
-  // Calculate interest amount
-  const calculateInterest = () => {
-    return (loanAmount * interestRate / 100) * (loanTerm / 30);
+  // Fee structure based on local law compliance
+  const calculateFees = () => {
+    let interestRate = 0;
+    let serviceFeeRate = 20; // 20%
+    let adminFeeRate = 10; // 10%
+    let commitmentFeeRate = 6; // 6%
+    
+    // Set interest rates based on loan term
+    if (loanTerm === 7) {
+      interestRate = 1; // 1% for 7 days
+      // Target: 22% total (1% interest + 21% other fees)
+      let targetOtherFees = 22 - interestRate;
+      let adjustmentFactor = targetOtherFees / (serviceFeeRate + adminFeeRate + commitmentFeeRate);
+      serviceFeeRate *= adjustmentFactor;
+      adminFeeRate *= adjustmentFactor;
+      commitmentFeeRate *= adjustmentFactor;
+    } else if (loanTerm === 14) {
+      interestRate = 2; // 2% for 14 days
+      // Target: 26% total (2% interest + 24% other fees)
+      let targetOtherFees = 26 - interestRate;
+      let adjustmentFactor = targetOtherFees / (serviceFeeRate + adminFeeRate + commitmentFeeRate);
+      serviceFeeRate *= adjustmentFactor;
+      adminFeeRate *= adjustmentFactor;
+      commitmentFeeRate *= adjustmentFactor;
+    } else if (loanTerm === 30) {
+      interestRate = 4; // 4% for 30 days
+      // Target: 30% total (4% interest + 26% other fees)
+      let targetOtherFees = 30 - interestRate;
+      let adjustmentFactor = targetOtherFees / (serviceFeeRate + adminFeeRate + commitmentFeeRate);
+      serviceFeeRate *= adjustmentFactor;
+      adminFeeRate *= adjustmentFactor;
+      commitmentFeeRate *= adjustmentFactor;
+    }
+    
+    // Calculate actual amounts
+    const interestAmount = loanAmount * interestRate / 100;
+    const adjustedServiceFee = loanAmount * serviceFeeRate / 100;
+    const adjustedAdminFee = loanAmount * adminFeeRate / 100;
+    const adjustedCommitmentFee = loanAmount * commitmentFeeRate / 100;
+    
+    return {
+      interestAmount,
+      serviceFee: adjustedServiceFee,
+      adminFee: adjustedAdminFee,
+      commitmentFee: adjustedCommitmentFee,
+      totalFees: interestAmount + adjustedServiceFee + adjustedAdminFee + adjustedCommitmentFee
+    };
   };
   
   // Calculate total repayment amount
   const calculateTotalRepayment = () => {
-    return loanAmount + calculateInterest();
+    const fees = calculateFees();
+    return loanAmount + fees.totalFees;
   };
   
   const handleSliderChange = (e) => {
@@ -121,14 +163,42 @@ const LoanApplication = () => {
               <div className="col-6">Loan Amount:</div>
               <div className="col-6 text-end fw-bold">GHS {loanAmount.toFixed(2)}</div>
             </div>
-            <div className="row mb-3">
-              <div className="col-6">Interest ({interestRate}%):</div>
-              <div className="col-6 text-end fw-bold text-warning">GHS {calculateInterest().toFixed(2)}</div>
+            
+            {/* Fee Breakdown */}
+            <div className="mb-3">
+              <h6 className="text-muted mb-2">Fee Breakdown:</h6>
+              <div className="row mb-2">
+                <div className="col-8">Interest ({loanTerm === 7 ? '1' : loanTerm === 14 ? '2' : '4'}%):</div>
+                <div className="col-4 text-end text-warning">GHS {calculateFees().interestAmount.toFixed(2)}</div>
+              </div>
+              {calculateFees().serviceFee > 0 && (
+                <div className="row mb-2">
+                  <div className="col-8">Service Fee:</div>
+                  <div className="col-4 text-end text-info">GHS {calculateFees().serviceFee.toFixed(2)}</div>
+                </div>
+              )}
+              {calculateFees().adminFee > 0 && (
+                <div className="row mb-2">
+                  <div className="col-8">Administration Fee:</div>
+                  <div className="col-4 text-end text-info">GHS {calculateFees().adminFee.toFixed(2)}</div>
+                </div>
+              )}
+              {calculateFees().commitmentFee > 0 && (
+                <div className="row mb-2">
+                  <div className="col-8">Commitment Fee:</div>
+                  <div className="col-4 text-end text-info">GHS {calculateFees().commitmentFee.toFixed(2)}</div>
+                </div>
+              )}
             </div>
+            
             <hr />
             <div className="row mb-3">
               <div className="col-6 fw-bold text-primary">Total Repayment:</div>
               <div className="col-6 text-end fw-bold text-primary fs-5">GHS {calculateTotalRepayment().toFixed(2)}</div>
+            </div>
+            <div className="row mb-2">
+              <div className="col-6">Total Fee Rate:</div>
+              <div className="col-6 text-end fw-bold text-success">{((calculateFees().totalFees / loanAmount) * 100).toFixed(1)}%</div>
             </div>
             <div className="row">
               <div className="col-6">Due Date:</div>
