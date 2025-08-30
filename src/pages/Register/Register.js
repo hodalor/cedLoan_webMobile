@@ -95,13 +95,13 @@ const Register = () => {
 
         <div className="mt-6 text-xs text-gray-500 text-center" style={{fontWeight:"bold", padding:"1rem"}}>
           By continuing, you agree to our{' '}
-          <a href="#" className="text-cedi-blue hover:underline transition-colors duration-200">
+          <button type="button" className="text-cedi-blue hover:underline transition-colors duration-200 bg-transparent border-none p-0 cursor-pointer">
             Terms of Service
-          </a>{' '}
+          </button>{' '}
           and{' '}
-          <a href="#" className="text-cedi-blue hover:underline transition-colors duration-200">
+          <button type="button" className="text-cedi-blue hover:underline transition-colors duration-200 bg-transparent border-none p-0 cursor-pointer">
             Privacy Policy
-          </a>
+          </button>
         </div>
       </div>
     </div>
