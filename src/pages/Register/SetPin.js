@@ -63,7 +63,7 @@ const SetPin = () => {
               <div className="card-body p-4 p-md-5">
                 <div className="text-center mb-4">
                   <div className="cedi-logo-container mx-auto mb-3">
-                    <span className="cedi-logo-text">CEDI</span>
+                    <span className="cedi-logo-text">QUICKMULA</span>
                   </div>
                   <h1 className="cedi-title mb-2">Set Your PIN</h1>
                   <p className="text-muted">
