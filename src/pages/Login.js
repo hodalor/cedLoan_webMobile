@@ -33,7 +33,7 @@ const Login = () => {
     <div className="cedi-gradient min-vh-100">
       <div className="container-fluid d-flex align-items-center justify-content-center min-vh-100 p-3">
         <div className="row w-100 justify-content-center">
-          <div className="col-12 col-sm-10 col-md-8 col-lg-10 col-xl-10">
+          <div className="col-12 col-sm-10 col-md-8 col-lg-12 col-xl-12">
             <div className="card cedi-shadow border-0 rounded-4">
               <div className="card-body p-5">
                 <div className="text-center mb-4">

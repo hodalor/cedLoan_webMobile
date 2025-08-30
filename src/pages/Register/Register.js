@@ -32,29 +32,33 @@ const Register = () => {
   };
 
   return (
-    <div className="min-h-screen bg-gradient-to-br from-cedi-blue to-cedi-dark flex items-center justify-center px-4">
-      <div className="bg-white rounded-3xl shadow-cedi p-8 w-full max-w-md border border-cedi-light">
+    <div className="min-h-screen bg-gradient-to-br from-cedi-blue to-cedi-dark flex items-center justify-center px-4"style={{ padding:"13rem"}}>
+      <div className="bg-white rounded-3xl shadow-cedi p-8 w-full max-w-md border border-cedi-light" style={{ borderRadius:"1rem"}}>
         <div className="text-center mb-8">
-          <div className="w-16 h-16 bg-gradient-to-r from-cedi-blue to-cedi-gold rounded-2xl mx-auto mb-4 flex items-center justify-center">
+          {/* <div className="w-16 h-16 bg-gradient-to-r from-cedi-blue to-cedi-gold rounded-2xl mx-auto mb-4 flex items-center justify-center" style={{backgroundColor:"none"}} >
             <span className="text-white font-bold text-xl">CEDI</span>
-          </div>
+           
+          </div> */}
           <h1 className="text-3xl font-bold text-cedi-dark mb-2">Create Account</h1>
-          <p className="text-gray-600">Join CEDI and start your loan journey</p>
+          {/* <p className="text-gray-600">Join CEDI and start your loan journey</p> */}
         </div>
 
-        <form onSubmit={handleRegister} className="space-y-6">
+        <form onSubmit={handleRegister} className="space-y-10" style={{ alignItems:"center", justifyContent:"center", textAlign:"center"}}>
           <div>
-            <label className="block text-sm font-medium text-gray-700 mb-2">
+            <div> <label className="block text-sm font-medium text-gray-700 mb-2" style={{fontWeight:"bold",al:""}}>
               Phone Number
-            </label>
+            </label></div>
+            <div>  
             <input
               type="tel"
               value={phone}
               onChange={(e) => setPhone(e.target.value)}
-              className="w-full px-4 py-3 border border-gray-300 rounded-xl focus:ring-2 focus:ring-cedi-blue focus:border-cedi-blue transition-all duration-200 bg-gray-50 focus:bg-white"
+              className="w-100% px-4 py-3 border border-gray-300 rounded-xl focus:ring-2 focus:ring-cedi-blue focus:border-cedi-blue transition-all duration-200 bg-gray-50 focus:bg-white"
               placeholder="Enter your phone number"
-              required
-            />
+              required 
+             style={{borderRadius:"1rem", width:"85%",}}
+            /></div>
+         
             <p className="text-xs text-gray-500 mt-1">
               We'll send you a verification code
             </p>
@@ -65,12 +69,12 @@ const Register = () => {
               {error}
             </div>
           )}
-
+         
           <button
             type="submit"
             disabled={loading}
             className="w-full bg-gradient-to-r from-cedi-blue to-cedi-dark text-white py-3 rounded-xl font-semibold hover:from-cedi-dark hover:to-cedi-blue disabled:opacity-50 disabled:cursor-not-allowed transition-all duration-300 transform hover:scale-105 shadow-lg"
-          >
+          style={{borderRadius:"1rem", width:"85%", margin:"auto", border:"none"}}>
             {loading ? 'Sending Code...' : 'Continue'}
           </button>
         </form>
@@ -78,16 +82,17 @@ const Register = () => {
         <div className="mt-6 text-center">
           <p className="text-gray-600">
             Already have an account?{' '}
-            <button
+            
+          </p>
+          <button
               onClick={() => navigate('/login')}
               className="text-cedi-blue hover:text-cedi-dark font-semibold transition-colors duration-200"
-            >
+           style={{borderRadius:"0.5rem", width:"60%", margin:"auto", border:"none", fontWeight:"bold"}} >
               Sign In
             </button>
-          </p>
         </div>
 
-        <div className="mt-6 text-xs text-gray-500 text-center">
+        <div className="mt-6 text-xs text-gray-500 text-center" style={{fontWeight:"bold", padding:"1rem"}}>
           By continuing, you agree to our{' '}
           <a href="#" className="text-cedi-blue hover:underline transition-colors duration-200">
             Terms of Service
