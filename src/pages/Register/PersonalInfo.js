@@ -96,7 +96,7 @@ const PersonalInfo = () => {
 
                 <form onSubmit={handleSubmit}>
                   <div className="row mb-3">
-                    <div className="col-md-6">
+                    <div className="col-md-12">
                       <div className="mb-3">
                         <label className="form-label fw-medium text-dark">
                           First Name *
@@ -113,7 +113,7 @@ const PersonalInfo = () => {
                       </div>
                     </div>
 
-                    <div className="col-md-6">
+                    <div className="col-md-12">
                       <div className="mb-3">
                         <label className="form-label fw-medium text-dark">
                           Last Name *
@@ -218,7 +218,7 @@ const PersonalInfo = () => {
                   </div>
 
                   <div className="row mb-3">
-                    <div className="col-md-4">
+                    <div className="col-md-12">
                       <div className="mb-3">
                         <label className="form-label fw-medium text-dark">
                           City *
@@ -235,7 +235,7 @@ const PersonalInfo = () => {
                       </div>
                     </div>
 
-                    <div className="col-md-4">
+                    <div className="col-md-12">
                       <div className="mb-3">
                         <label className="form-label fw-medium text-dark">
                           State *
@@ -252,7 +252,7 @@ const PersonalInfo = () => {
                       </div>
                     </div>
 
-                    <div className="col-md-4">
+                    <div className="col-md-12">
                       <div className="mb-3">
                         <label className="form-label fw-medium text-dark">
                           Postal Code

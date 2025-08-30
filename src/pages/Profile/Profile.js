@@ -12,8 +12,8 @@ const Profile = () => {
     setTimeout(() => {
       const mockUser = {
         id: 'U12345',
-        name: 'John Doe',
-        email: 'john.doe@example.com',
+        name: 'Prince H',
+        email: 'prince@quickmul.com',
         phone: '+233 50 123 4567',
         idVerified: true,
         accountCreated: new Date(2023, 5, 10),
