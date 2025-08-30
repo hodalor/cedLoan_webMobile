@@ -58,7 +58,7 @@ const SetPin = () => {
     <div className="cedi-bg-gradient d-flex align-items-center justify-content-center" style={{ minHeight: '100vh', padding: '1rem' }}>
       <div className="container">
         <div className="row justify-content-center">
-          <div className="col-12 col-sm-10 col-md-8 col-lg-6 col-xl-5">
+          <div className="col-12 col-sm-10 col-md-8 col-lg-12 col-xl-12">
             <div className="card cedi-card shadow-lg border-0">
               <div className="card-body p-4 p-md-5">
                 <div className="text-center mb-4">
@@ -87,7 +87,7 @@ const SetPin = () => {
                       inputMode="numeric"
                       pattern="[0-9]*"
                       required
-                      style={{ fontSize: '1.5rem', letterSpacing: '0.5rem', padding: '0.75rem' }}
+                      style={{ fontSize: '1.5rem', letterSpacing: '0.5rem', padding: '0.75rem',borderRadius:"1rem", width:"100%" }}
                     />
                   </div>
 
@@ -106,7 +106,7 @@ const SetPin = () => {
                       inputMode="numeric"
                       pattern="[0-9]*"
                       required
-                      style={{ fontSize: '1.5rem', letterSpacing: '0.5rem', padding: '0.75rem' }}
+                      style={{ fontSize: '1.5rem', letterSpacing: '0.5rem', padding: '0.75rem',borderRadius:"1rem", width:"100%" }}
                     />
                   </div>
 

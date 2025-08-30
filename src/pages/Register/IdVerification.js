@@ -210,7 +210,7 @@ const IdVerification = () => {
     <div className="cedi-page-background">
       <div className="container py-4">
         <div className="row justify-content-center">
-          <div className="col-12 col-lg-10 col-xl-8">
+          <div className="col-12 col-md-12 col-lg-12 col-xl-12">
             <div className="card cedi-card">
               <div className="card-body p-4 p-md-5">
                 <div className="text-center mb-4">
@@ -222,7 +222,7 @@ const IdVerification = () => {
 
                 <form onSubmit={handleSubmit}>
                   <div className="row mb-4">
-                    <div className="col-md-6 mb-3">
+                    <div className="col-md-12 mb-3">
                       <label className="form-label fw-medium text-cedi-dark">
                         ID Type *
                       </label>
@@ -243,7 +243,7 @@ const IdVerification = () => {
                       {errors.idType && <div className="invalid-feedback">{errors.idType}</div>}
                     </div>
 
-                    <div className="col-md-6 mb-3">
+                    <div className="col-md-12 mb-3">
                       <label className="form-label fw-medium text-cedi-dark">
                         ID Number *
                       </label>
@@ -262,7 +262,7 @@ const IdVerification = () => {
                   </div>
 
                   <div className="row mb-4">
-                    <div className="col-md-6 mb-4">
+                    <div className="col-md-12 mb-4">
                       <h5 className="fw-medium text-cedi-dark mb-3">Front of ID *</h5>
                       <FileUploadBox
                         fieldName="idFront"
@@ -274,7 +274,7 @@ const IdVerification = () => {
                     </div>
 
                     {['national-id', 'drivers-license'].includes(documents.idType) && (
-                      <div className="col-md-6 mb-4">
+                      <div className="col-md-12 mb-4">
                         <h5 className="fw-medium text-cedi-dark mb-3">Back of ID *</h5>
                         <FileUploadBox
                           fieldName="idBack"
@@ -288,7 +288,7 @@ const IdVerification = () => {
                   </div>
 
                   <div className="row mb-4">
-                    <div className="col-md-6 mb-4">
+                    <div className="col-md-12 mb-4">
                       <h5 className="fw-medium text-cedi-dark mb-3">Selfie Photo *</h5>
                       <FileUploadBox
                         fieldName="selfie"
@@ -299,7 +299,7 @@ const IdVerification = () => {
                       />
                     </div>
 
-                    <div className="col-md-6 mb-4">
+                    <div className="col-md-12 mb-4">
                       <h5 className="fw-medium text-cedi-dark mb-3">Proof of Address</h5>
                       <FileUploadBox
                         fieldName="proofOfAddress"

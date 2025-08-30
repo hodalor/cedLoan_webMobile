@@ -93,7 +93,7 @@ const WorkInfo = () => {
     <div className="cedi-page-background">
       <div className="container py-4">
         <div className="row justify-content-center">
-          <div className="col-12 col-lg-10 col-xl-8">
+          <div className="col-12 col-md-12 col-lg-12 col-xl-12">
             <div className="card cedi-card">
               <div className="card-body p-4 p-md-5">
                 <div className="text-center mb-4">

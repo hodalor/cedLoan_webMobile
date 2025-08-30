@@ -69,7 +69,7 @@ const EducationInfo = () => {
     <div className="min-vh-100 cedi-gradient py-4">
       <div className="container">
         <div className="row justify-content-center">
-          <div className="col-lg-8 col-xl-6">
+          <div className="col-lg-8 col-md-12 col-lg-12 col-xl-12, ">
             <div className="card shadow-lg border-0 rounded-4">
               <div className="card-body p-4 p-md-5">
                 <div className="text-center mb-4">

@@ -117,7 +117,7 @@ const EmergencyContacts = () => {
     <div className="cedi-page-background">
       <div className="container py-4">
         <div className="row justify-content-center">
-          <div className="col-12 col-lg-10 col-xl-8">
+          <div className="col-12 col-md-12 col-lg-12 col-xl-12">
             <div className="card cedi-card">
               <div className="card-body p-4 p-md-5">
                 <div className="text-center mb-4">
@@ -150,7 +150,7 @@ const EmergencyContacts = () => {
                         </div>
 
                         <div className="row">
-                          <div className="col-md-6 mb-3">
+                          <div className="col-md-12 mb-12">
                             <label className="form-label fw-medium text-cedi-dark">
                               Full Name *
                             </label>
@@ -196,7 +196,7 @@ const EmergencyContacts = () => {
                         </div>
 
                         <div className="row">
-                          <div className="col-md-6 mb-3">
+                          <div className="col-md-12 mb-3">
                             <label className="form-label fw-medium text-cedi-dark">
                               Phone Number *
                             </label>
@@ -214,7 +214,7 @@ const EmergencyContacts = () => {
                             )}
                           </div>
 
-                          <div className="col-md-6 mb-3">
+                          <div className="col-md-12 mb-3">
                             <label className="form-label fw-medium text-cedi-dark">
                               Email Address
                             </label>

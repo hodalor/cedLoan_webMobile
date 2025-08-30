@@ -39,6 +39,7 @@ const Register = () => {
             <span className="text-white font-bold text-xl">CEDI</span>
            
           </div> */}
+          
           <h1 className="text-3xl font-bold text-cedi-dark mb-2">Create Account</h1>
           {/* <p className="text-gray-600">Join CEDI and start your loan journey</p> */}
         </div>
