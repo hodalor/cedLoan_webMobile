@@ -1,3 +1,3 @@
+export { ToastProvider, useToast } from './ToastContext';
 export { default as Toast } from './Toast';
-export { default as ToastProvider, useToast } from './ToastContainer';
-export { ToastProvider as ToastContainer } from './ToastContainer';
+export { default as ToastContainer } from './ToastContainer';

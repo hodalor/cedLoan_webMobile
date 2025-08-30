@@ -21,20 +21,22 @@ import Profile from './pages/Profile/Profile';
 
 // Import components
 import BottomNavigation from './components/BottomNavigation';
-import { ToastProvider } from './components/Toast';
+import ProtectedRoute from './components/ProtectedRoute';
+import ToastContainer from './components/Toast/ToastContainer';
 
-// Protected Route component
-const ProtectedRoute = ({ children }) => {
-  const isAuthenticated = localStorage.getItem('isAuthenticated') === 'true';
-  return isAuthenticated ? children : <Navigate to="/login" />;
-};
+// Import contexts
+import { AuthProvider } from './contexts/AuthContext';
+import { SocketProvider } from './contexts/SocketContext';
+import { ToastProvider } from './contexts/ToastContext';
 
 function App() {
   return (
     <ToastProvider>
-      <Router>
-        <div className="app-container">
-          <Routes>
+      <AuthProvider>
+        <SocketProvider>
+        <Router>
+          <div className="app-container">
+            <Routes>
             {/* Public Routes */}
             <Route path="/login" element={<Login />} />
             <Route path="/register" element={<Register />} />
@@ -83,8 +85,11 @@ function App() {
             {/* Default redirect to login */}
             <Route path="*" element={<Navigate to="/login" />} />
           </Routes>
+          <ToastContainer />
         </div>
       </Router>
+      </SocketProvider>
+    </AuthProvider>
     </ToastProvider>
   );
 }

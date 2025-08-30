@@ -1,5 +1,7 @@
 import React, { useState, useEffect } from 'react';
 import { useNavigate } from 'react-router-dom';
+import { useAuth } from '../../contexts/AuthContext';
+import { useToast } from '../../contexts/ToastContext';
 
 const VerifyOTP = () => {
   const [otp, setOtp] = useState(['', '', '', '', '', '']);
@@ -8,6 +10,8 @@ const VerifyOTP = () => {
   const [resendTimer, setResendTimer] = useState(60);
   const [canResend, setCanResend] = useState(false);
   const navigate = useNavigate();
+  const { verifyOTP, sendOTP } = useAuth();
+  const { showToast } = useToast();
 
   useEffect(() => {
     const timer = setInterval(() => {
@@ -57,21 +61,52 @@ const VerifyOTP = () => {
 
     setLoading(true);
     
-    // Simulate API call
-    setTimeout(() => {
+    try {
+      const phone = localStorage.getItem('registrationPhone');
+      const result = await verifyOTP(phone, otpValue);
+      
+      if (result.success) {
+        localStorage.setItem('phoneVerified', 'true');
+        navigate('/set-pin');
+      } else {
+        setError(result.error || 'Invalid OTP');
+      }
+    } catch (error) {
+      setError('Failed to verify OTP. Please try again.');
+    } finally {
       setLoading(false);
-      // For demo purposes, accept any 6-digit code
-      localStorage.setItem('phoneVerified', 'true');
-      navigate('/set-pin');
-    }, 1000);
+    }
   };
 
-  const handleResend = () => {
+  const handleResend = async () => {
     if (!canResend) return;
     
     setCanResend(false);
     setResendTimer(60);
     setError('');
+    
+    try {
+      const phone = localStorage.getItem('registrationPhone');
+      const result = await sendOTP(phone);
+      
+      if (result.success) {
+        showToast('New OTP sent successfully!', 'success');
+        // For demo purposes, show the OTP in console
+        if (result.otp) {
+          console.log('New OTP:', result.otp);
+        }
+      } else {
+        setError(result.error || 'Failed to resend OTP');
+        setCanResend(true);
+        setResendTimer(0);
+        return;
+      }
+    } catch (error) {
+      setError('Failed to resend OTP. Please try again.');
+      setCanResend(true);
+      setResendTimer(0);
+      return;
+    }
     
     // Restart timer
     const timer = setInterval(() => {

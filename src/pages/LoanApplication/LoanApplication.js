@@ -1,10 +1,13 @@
-import React, { useState } from 'react';
+import React, { useState, useEffect } from 'react';
 import { useNavigate } from 'react-router-dom';
-import { useToast } from '../../components/Toast';
+import { useToast } from '../../contexts/ToastContext';
+import { useSocket } from '../../contexts/SocketContext';
+import { loansAPI } from '../../services/api';
 
 const LoanApplication = () => {
   const navigate = useNavigate();
-  const { showSuccess, showError, showInfo } = useToast();
+  const { showToast } = useToast();
+  useSocket(); // Initialize socket connection
   const [loanAmount, setLoanAmount] = useState(100);
   const [loanTerm, setLoanTerm] = useState(14);
   const [loanStatus, setLoanStatus] = useState(null); // null, 'under_review', 'rejected', 'approved'
@@ -13,6 +16,30 @@ const LoanApplication = () => {
   const [remainingBalance, setRemainingBalance] = useState(0);
   const [paymentHistory, setPaymentHistory] = useState([]);
   const [showPaymentModal, setShowPaymentModal] = useState(false);
+  
+  // Listen for real-time loan status updates
+  useEffect(() => {
+    const handleLoanStatusUpdate = (event) => {
+      const { status, message } = event.detail;
+      console.log('📋 Received loan status update:', event.detail);
+      
+      // Update loan status if it matches current application
+      setLoanStatus(status);
+      
+      // Show toast notification
+      if (message) {
+        showToast(message, 'info');
+      }
+    };
+
+    // Add event listener for loan status updates
+    window.addEventListener('loanStatusUpdate', handleLoanStatusUpdate);
+
+    // Cleanup event listener
+    return () => {
+      window.removeEventListener('loanStatusUpdate', handleLoanStatusUpdate);
+    };
+  }, [showToast]);
   
   // Fee structure based on local law compliance
   const calculateFees = () => {
@@ -77,18 +104,36 @@ const LoanApplication = () => {
     setLoanTerm(days);
   };
   
-  const handleSubmit = (e) => {
+  const handleSubmit = async (e) => {
     e.preventDefault();
     setIsSubmitting(true);
     
-    // Simulate API call
-    setTimeout(() => {
-        setLoanStatus('under_review');
-        showSuccess(`Loan application submitted successfully! Amount: GHS ${loanAmount}, Term: ${loanTerm} days, Total Repayment: GHS ${calculateTotalRepayment().toFixed(2)}. Status: Under Review`);
-        setIsSubmitting(false);
-      // Navigate to success page or back to home
-      navigate('/');
-    }, 2000);
+    try {
+      const fees = calculateFees();
+      const totalRepayment = calculateTotalRepayment();
+      
+      const loanData = {
+        amount: loanAmount,
+        duration: loanTerm,
+        purpose: 'Personal loan',
+        interestRate: fees.interestRate,
+        totalRepayment: totalRepayment,
+        fees: {
+          serviceFee: fees.serviceFeeAmount,
+          adminFee: fees.adminFeeAmount,
+          commitmentFee: fees.commitmentFeeAmount
+        }
+      };
+      
+      await loansAPI.applyForLoan(loanData);
+      setLoanStatus('under_review');
+      showToast('Loan application submitted successfully!', 'success');
+      navigate('/history');
+    } catch (error) {
+      showToast(error.message || 'Failed to submit loan application', 'error');
+    } finally {
+      setIsSubmitting(false);
+    }
   };
   
   const handleMakePayment = () => {
@@ -104,20 +149,20 @@ const LoanApplication = () => {
     const amount = paymentType === 'full' ? remainingBalance : parseFloat(paymentAmount);
     
     // Validation
-     if (paymentType === 'partial' && (!paymentAmount || amount <= 0)) {
-       showError('Please enter a valid payment amount.');
-       return;
-     }
-     
-     if (amount > remainingBalance) {
-       showError(`Payment amount (GHS ${amount.toFixed(2)}) cannot exceed remaining balance (GHS ${remainingBalance.toFixed(2)}).`);
-       return;
-     }
-     
-     if (!mobileNumber || mobileNumber.length < 10) {
-       showError('Please enter a valid mobile number.');
-       return;
-     }
+    if (paymentType === 'partial' && (!paymentAmount || amount <= 0)) {
+      alert('Please enter a valid payment amount.');
+      return;
+    }
+    
+    if (amount > remainingBalance) {
+      alert(`Payment amount (GHS ${amount.toFixed(2)}) cannot exceed remaining balance (GHS ${remainingBalance.toFixed(2)}).`);
+      return;
+    }
+    
+    if (!mobileNumber || mobileNumber.length < 10) {
+      alert('Please enter a valid mobile number.');
+      return;
+    }
     
     // Process payment
     const newBalance = remainingBalance - amount;
@@ -135,13 +180,13 @@ const LoanApplication = () => {
     setPaymentHistory([...paymentHistory, payment]);
     
     // Check if fully paid
-     if (newBalance <= 0) {
-       setLoanStatus(null);
-       setTermsAccepted(false);
-       showSuccess(`Payment successful! GHS ${amount.toFixed(2)} paid via ${selectedProvider.toUpperCase()}. Loan fully repaid!`);
-     } else {
-       showSuccess(`Payment successful! GHS ${amount.toFixed(2)} paid via ${selectedProvider.toUpperCase()}. Remaining balance: GHS ${newBalance.toFixed(2)}`);
-     }
+    if (newBalance <= 0) {
+      setLoanStatus(null);
+      setTermsAccepted(false);
+      alert(`Payment successful! GHS ${amount.toFixed(2)} paid via ${selectedProvider.toUpperCase()}. Loan fully repaid!`);
+    } else {
+      alert(`Payment successful! GHS ${amount.toFixed(2)} paid via ${selectedProvider.toUpperCase()}. Remaining balance: GHS ${newBalance.toFixed(2)}`);
+    }
     
     setShowPaymentModal(false);
     setPaymentAmount('');
@@ -151,14 +196,14 @@ const LoanApplication = () => {
   // Simulate admin actions for demo purposes
   const simulateAdminReject = () => {
     setLoanStatus('rejected');
-    showError('Loan application has been rejected. You can apply for a new loan.');
+    alert('Loan application has been rejected. You can apply for a new loan.');
   };
   
   const simulateAdminApprove = () => {
     const totalAmount = calculateTotalRepayment();
     setLoanStatus('approved');
     setRemainingBalance(totalAmount);
-    showSuccess('Congratulations! Your loan has been approved. You can now make payment.');
+    alert('Congratulations! Your loan has been approved. You can now make payment.');
   };
   
   return (

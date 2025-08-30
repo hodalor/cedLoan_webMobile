@@ -1,48 +1,142 @@
 import React, { useState, useEffect } from 'react';
 import { useNavigate } from 'react-router-dom';
+import { useAuth } from '../../contexts/AuthContext';
+import { useToast } from '../../contexts/ToastContext';
+import { useSocket } from '../../contexts/SocketContext';
+import { loansAPI, paymentsAPI } from '../../services/api';
 
 const History = () => {
   const navigate = useNavigate();
+  const { user } = useAuth();
+  const { showToast } = useToast();
+  useSocket(); // Initialize socket connection
   const [transactions, setTransactions] = useState([]);
   const [isLoading, setIsLoading] = useState(true);
 
-  // Mock data - in a real app, this would come from an API
   useEffect(() => {
-    // Simulate API call
-    setTimeout(() => {
-      const mockTransactions = [
-        {
-          id: 'T12345',
-          type: 'loan',
-          amount: 2000,
-          currency: 'GHS',
-          status: 'completed',
-          date: new Date(2023, 6, 15),
-          description: 'Loan disbursement'
-        },
-        {
-          id: 'T12346',
-          type: 'repayment',
-          amount: 2100,
-          currency: 'GHS',
-          status: 'completed',
-          date: new Date(2023, 6, 29),
-          description: 'Loan repayment'
-        },
-        {
-          id: 'T12347',
-          type: 'loan',
-          amount: 3000,
-          currency: 'GHS',
-          status: 'active',
-          date: new Date(2023, 7, 10),
-          description: 'Loan disbursement'
-        }
-      ];
-      setTransactions(mockTransactions);
-      setIsLoading(false);
-    }, 1000);
-  }, []);
+    const fetchTransactions = async () => {
+      try {
+        const [loans, payments] = await Promise.all([
+          loansAPI.getUserLoans(),
+          paymentsAPI.getUserPayments()
+        ]);
+        
+        const allTransactions = [];
+        
+        // Add loan transactions
+        loans.forEach(loan => {
+          allTransactions.push({
+            id: loan._id,
+            type: 'loan',
+            amount: loan.amount,
+            currency: 'GHS',
+            status: loan.status,
+            date: new Date(loan.createdAt),
+            description: `Loan disbursement - ${loan.duration} days`
+          });
+        });
+        
+        // Add payment transactions
+        payments.forEach(payment => {
+          allTransactions.push({
+            id: payment._id,
+            type: 'repayment',
+            amount: payment.amount,
+            currency: 'GHS',
+            status: payment.status,
+            date: new Date(payment.createdAt),
+            description: 'Loan repayment'
+          });
+        });
+        
+        // Sort by date (newest first)
+        allTransactions.sort((a, b) => new Date(b.date) - new Date(a.date));
+        
+        setTransactions(allTransactions);
+      } catch (error) {
+        console.error('Error fetching transactions:', error);
+        showToast('Failed to load transaction history', 'error');
+      } finally {
+        setIsLoading(false);
+      }
+    };
+    
+    if (user) {
+      fetchTransactions();
+    }
+  }, [user, showToast]);
+
+  // Listen for real-time transaction updates
+  useEffect(() => {
+    const handleTransactionUpdate = (event) => {
+      const { type, message } = event.detail;
+      console.log('💳 Received transaction update:', event.detail);
+      
+      // Refresh transactions when updates are received
+      if (type === 'loan-status-changed' || type === 'payment-received') {
+        // Refetch transactions to get the latest data
+        const fetchUpdatedTransactions = async () => {
+          try {
+            const [loans, payments] = await Promise.all([
+              loansAPI.getUserLoans(),
+              paymentsAPI.getUserPayments()
+            ]);
+            
+            const allTransactions = [];
+            
+            // Add loan transactions
+            loans.forEach(loan => {
+              allTransactions.push({
+                id: loan._id,
+                type: 'loan',
+                amount: loan.amount,
+                currency: 'GHS',
+                status: loan.status,
+                date: new Date(loan.createdAt),
+                referenceNumber: loan.referenceNumber || 'N/A'
+              });
+            });
+            
+            // Add payment transactions
+            payments.forEach(payment => {
+              allTransactions.push({
+                id: payment._id,
+                type: 'payment',
+                amount: payment.amount,
+                currency: 'GHS',
+                status: payment.status,
+                date: new Date(payment.createdAt),
+                referenceNumber: payment.referenceNumber || 'N/A'
+              });
+            });
+            
+            // Sort by date (newest first)
+            allTransactions.sort((a, b) => b.date - a.date);
+            setTransactions(allTransactions);
+          } catch (error) {
+            console.error('Error fetching updated transactions:', error);
+          }
+        };
+        
+        fetchUpdatedTransactions();
+      }
+      
+      // Show toast notification
+      if (message) {
+        showToast(message, 'info');
+      }
+    };
+
+    // Add event listeners for transaction updates
+    window.addEventListener('loanStatusUpdate', handleTransactionUpdate);
+    window.addEventListener('paymentUpdate', handleTransactionUpdate);
+
+    // Cleanup event listeners
+    return () => {
+      window.removeEventListener('loanStatusUpdate', handleTransactionUpdate);
+      window.removeEventListener('paymentUpdate', handleTransactionUpdate);
+    };
+  }, [showToast]);
 
   const formatDate = (date) => {
     return date.toLocaleDateString('en-GB', {

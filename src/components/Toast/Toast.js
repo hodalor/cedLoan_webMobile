@@ -1,67 +1,39 @@
-import React, { useState, useEffect } from 'react';
+import React from 'react';
 import './Toast.css';
 
-const Toast = ({ message, type = 'info', duration = 4000, onClose }) => {
-  const [isVisible, setIsVisible] = useState(true);
-  const [isExiting, setIsExiting] = useState(false);
-
-  useEffect(() => {
-    const timer = setTimeout(() => {
-      handleClose();
-    }, duration);
-
-    return () => clearTimeout(timer);
-  }, [duration]);
-
-  const handleClose = () => {
-    setIsExiting(true);
-    setTimeout(() => {
-      setIsVisible(false);
-      if (onClose) onClose();
-    }, 300); // Animation duration
-  };
-
-  if (!isVisible) return null;
-
-  const getIcon = () => {
+const Toast = ({ toast, onClose }) => {
+  const getIcon = (type) => {
     switch (type) {
       case 'success':
-        return '✅';
+        return '✓';
       case 'error':
-        return '❌';
+        return '✕';
       case 'warning':
-        return '⚠️';
+        return '⚠';
       case 'info':
       default:
-        return 'ℹ️';
-    }
-  };
-
-  const getTypeClass = () => {
-    switch (type) {
-      case 'success':
-        return 'toast-success';
-      case 'error':
-        return 'toast-error';
-      case 'warning':
-        return 'toast-warning';
-      case 'info':
-      default:
-        return 'toast-info';
+        return 'ℹ';
     }
   };
 
   return (
-    <div className={`toast-notification ${getTypeClass()} ${isExiting ? 'toast-exit' : 'toast-enter'}`}>
+    <div className={`toast toast-${toast.type}`}>
       <div className="toast-content">
-        <span className="toast-icon">{getIcon()}</span>
-        <span className="toast-message">{message}</span>
-        <button className="toast-close" onClick={handleClose}>
+        <span className="toast-icon">{getIcon(toast.type)}</span>
+        <span className="toast-message">{toast.message}</span>
+        <button 
+          className="toast-close" 
+          onClick={() => onClose(toast.id)}
+          aria-label="Close notification"
+        >
           ×
         </button>
       </div>
       <div className="toast-progress">
-        <div className="toast-progress-bar" style={{ animationDuration: `${duration}ms` }}></div>
+        <div 
+          className="toast-progress-bar" 
+          style={{ animationDuration: `${toast.duration}ms` }}
+        ></div>
       </div>
     </div>
   );

@@ -1,12 +1,16 @@
 import React, { useState } from 'react';
 import { useNavigate } from 'react-router-dom';
+import { useAuth } from '../contexts/AuthContext';
+import { useToast } from '../contexts/ToastContext';
 
 const Login = () => {
-  const [phone, setPhone] = useState('');
-  const [pin, setPin] = useState('');
+  const [phone, setPhone] = useState('0244123456');
+  const [pin, setPin] = useState('1234');
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState('');
   const navigate = useNavigate();
+  const { login } = useAuth();
+  const { showToast } = useToast();
 
   const handleLogin = async (e) => {
     e.preventDefault();
@@ -19,14 +23,20 @@ const Login = () => {
 
     setLoading(true);
     
-    // Simulate API call
-    setTimeout(() => {
-      setLoading(false);
-      // For demo purposes, accept any phone/pin combination
-      localStorage.setItem('isAuthenticated', 'true');
-      localStorage.setItem('userPhone', phone);
+    try {
+      const credentials = {
+        phone,
+        pin
+      };
+      await login(credentials);
+      showToast('Login successful!', 'success');
       navigate('/home');
-    }, 1000);
+    } catch (error) {
+      setError(error.message || 'Login failed. Please try again.');
+      showToast(error.message || 'Login failed', 'error');
+    } finally {
+      setLoading(false);
+    }
   };
 
   return (
