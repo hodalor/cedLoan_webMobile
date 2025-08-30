@@ -123,7 +123,7 @@ const Profile = () => {
               </div>
             </div>
             
-            <div className="row g-3">
+            <div className="row g-3 page-bottom-actions">
               <div className="col-md-4">
                 <button className="btn btn-outline-primary btn-custom w-100" onClick={() => navigate('/edit-profile')}>
                   ✏️ Edit Profile

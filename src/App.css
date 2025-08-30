@@ -44,8 +44,8 @@
 }
 
 .page-container {
-  padding-bottom: 70px; /* Space for bottom navigation */
-  min-height: calc(100vh - 70px);
+  padding-bottom: 90px; /* Increased space for bottom navigation */
+  min-height: calc(100vh - 90px);
 }
 
 /* Mobile-first container adjustments */
@@ -68,7 +68,18 @@ body {
   }
   
   .page-container {
-    padding-bottom: 65px;
+    padding-bottom: 100px; /* Extra space on mobile for better accessibility */
+  }
+  
+  /* Extra margin for bottom buttons on mobile */
+  .btn-custom, .d-grid {
+    margin-bottom: 20px !important;
+  }
+  
+  /* Specific styling for action buttons at page bottom */
+  .page-bottom-actions {
+    margin-bottom: 30px !important;
+    padding-bottom: 20px !important;
   }
 }
 

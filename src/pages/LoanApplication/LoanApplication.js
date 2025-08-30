@@ -137,7 +137,7 @@ const LoanApplication = () => {
           </div>
         </div>
         
-        <div className="d-grid gap-2 mt-4">
+        <div className="d-grid gap-2 mt-4 page-bottom-actions">
           <button 
             type="submit" 
             className="btn btn-primary btn-lg btn-custom"

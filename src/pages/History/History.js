@@ -129,12 +129,14 @@ const History = () => {
               </div>
               <h4 className="card-title text-muted">No Transaction History</h4>
               <p className="card-text text-muted mb-4">You haven't made any transactions yet. Start by applying for your first loan!</p>
-              <button 
-                className="btn btn-primary btn-lg btn-custom"
-                onClick={() => navigate('/loan-application')}
-              >
-                🚀 Apply for a Loan
-              </button>
+              <div className="page-bottom-actions">
+                <button 
+                  className="btn btn-primary btn-lg btn-custom"
+                  onClick={() => navigate('/loan-application')}
+                >
+                  🚀 Apply for a Loan
+                </button>
+              </div>
             </div>
           </div>
         </div>

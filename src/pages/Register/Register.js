@@ -95,11 +95,11 @@ const Register = () => {
 
         <div className="mt-6 text-xs text-gray-500 text-center" style={{fontWeight:"bold", padding:"1rem"}}>
           By continuing, you agree to our{' '}
-          <button type="button" className="text-cedi-blue hover:underline transition-colors duration-200 bg-transparent border-none p-0 cursor-pointer">
+          <button type="button" className="text-cedi-blue hover:underline transition-colors duration-200 bg-transparent border-none p-0 cursor-pointer"style={{fontWeight:"bold", padding:"1rem", border:"none"}}>
             Terms of Service
           </button>{' '}
           and{' '}
-          <button type="button" className="text-cedi-blue hover:underline transition-colors duration-200 bg-transparent border-none p-0 cursor-pointer">
+          <button type="button" className="text-cedi-blue hover:underline transition-colors duration-200 bg-transparent border-none p-0 cursor-pointer" style={{fontWeight:"bold", padding:"1rem", border:"none"}}>
             Privacy Policy
           </button>
         </div>
