@@ -12,6 +12,7 @@ import WorkInfo from './pages/Register/WorkInfo';
 import EducationInfo from './pages/Register/EducationInfo';
 import EmergencyContacts from './pages/Register/EmergencyContacts';
 import IdVerification from './pages/Register/IdVerification';
+import ForgotPin from './pages/ForgotPin';
 
 // Import main app pages
 import Home from './pages/Home/Home';
@@ -47,6 +48,7 @@ function App() {
             <Route path="/education-info" element={<EducationInfo />} />
             <Route path="/emergency-contacts" element={<EmergencyContacts />} />
             <Route path="/id-verification" element={<IdVerification />} />
+            <Route path="/forgot-pin" element={<ForgotPin />} />
 
             {/* Protected Routes */}
             <Route path="/home" element={

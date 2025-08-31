@@ -1,5 +1,6 @@
-import React, { useState } from 'react';
+import React, { useState, useEffect } from 'react';
 import { useNavigate } from 'react-router-dom';
+import { toast } from 'react-toastify';
 
 const PersonalInfo = () => {
   const [formData, setFormData] = useState({
@@ -14,6 +15,19 @@ const PersonalInfo = () => {
     state: '',
     postalCode: ''
   });
+
+  // Load existing data from localStorage on component mount
+  useEffect(() => {
+    const savedPersonalInfo = localStorage.getItem('personalInfo');
+    if (savedPersonalInfo) {
+      try {
+        const parsedData = JSON.parse(savedPersonalInfo);
+        setFormData(parsedData);
+      } catch (error) {
+        console.error('Error parsing saved personal info:', error);
+      }
+    }
+  }, []);
   const [loading, setLoading] = useState(false);
   const [errors, setErrors] = useState({});
   const navigate = useNavigate();
@@ -71,12 +85,70 @@ const PersonalInfo = () => {
     
     setLoading(true);
     
-    // Simulate API call
-    setTimeout(() => {
-      setLoading(false);
+    try {
+      // Save personal info to localStorage
       localStorage.setItem('personalInfo', JSON.stringify(formData));
-      navigate('/work-info');
-    }, 1000);
+      
+      // Get all registration data from localStorage
+      const phoneNumber = localStorage.getItem('registrationPhone');
+      const pin = localStorage.getItem('userPin');
+      
+      if (!phoneNumber || !pin) {
+        toast.error('Registration data incomplete. Please start over.');
+        navigate('/register');
+        return;
+      }
+      
+      // Prepare complete registration data
+      const registrationData = {
+        phoneNumber: phoneNumber,
+        pin: pin,
+        personalInfo: {
+          firstName: formData.firstName,
+          lastName: formData.lastName,
+          email: formData.email,
+          dateOfBirth: formData.dateOfBirth,
+          gender: formData.gender,
+          maritalStatus: formData.maritalStatus,
+          address: formData.address,
+          city: formData.city,
+          state: formData.state,
+          postalCode: formData.postalCode
+        }
+      };
+      
+      // Submit registration to backend
+      const response = await fetch(`${process.env.REACT_APP_API_URL}/api/auth/register-phone`, {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/json',
+        },
+        body: JSON.stringify(registrationData),
+      });
+      
+      const data = await response.json();
+      
+      if (data.success) {
+        // Clear registration data from localStorage
+        localStorage.removeItem('registrationPhone');
+        localStorage.removeItem('userPin');
+        localStorage.removeItem('personalInfo');
+        
+        // Store user data and token
+        localStorage.setItem('token', data.token);
+        localStorage.setItem('user', JSON.stringify(data.user));
+        
+        toast.success('Registration completed successfully!');
+        navigate('/dashboard');
+      } else {
+        toast.error(data.message || 'Registration failed');
+      }
+    } catch (error) {
+      console.error('Registration error:', error);
+      toast.error('Registration failed. Please try again.');
+    } finally {
+      setLoading(false);
+    }
   };
 
   return (
@@ -282,7 +354,7 @@ const PersonalInfo = () => {
                       disabled={loading}
                       className="btn btn-primary flex-grow-1 py-2"
                     >
-                      {loading ? 'Saving...' : 'Continue'}
+                      {loading ? 'Completing Registration...' : 'Complete Registration'}
                     </button>
                   </div>
                 </form>

@@ -86,10 +86,21 @@ const Register = () => {
       const result = await phoneAuthService.verifyCode(otp);
       
       if (result.success) {
+        // Check if phone number already exists in database
+        const phoneExists = await checkPhoneExists(phone);
+        
+        if (phoneExists) {
+          setError('This phone number is already registered. Please login instead.');
+          showToast('Phone number already registered. Please login.', 'error');
+          setLoading(false);
+          return;
+        }
+        
         showToast('Phone number verified successfully!', 'success');
         // Store user info and navigate to next step
         localStorage.setItem('firebaseUser', JSON.stringify(result.user));
-        navigate('/register/set-pin');
+        localStorage.setItem('registrationData', JSON.stringify({ phone, verified: true }));
+        navigate('/set-pin');
       }
     } catch (error) {
       console.error('Error verifying OTP:', error);
@@ -97,6 +108,25 @@ const Register = () => {
       showToast(error.message || 'Invalid verification code', 'error');
     } finally {
       setLoading(false);
+    }
+  };
+
+  // Function to check if phone number exists in database
+  const checkPhoneExists = async (phoneNumber) => {
+    try {
+      const response = await fetch(`${process.env.REACT_APP_API_URL}/api/auth/check-phone`, {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/json',
+        },
+        body: JSON.stringify({ phone: phoneNumber }),
+      });
+      
+      const data = await response.json();
+      return data.exists;
+    } catch (error) {
+      console.error('Error checking phone existence:', error);
+      return false;
     }
   };
 

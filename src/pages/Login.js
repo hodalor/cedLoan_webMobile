@@ -1,16 +1,14 @@
 import React, { useState } from 'react';
 import { useNavigate } from 'react-router-dom';
-import { useAuth } from '../contexts/AuthContext';
-import { useToast } from '../contexts/ToastContext';
+import { toast } from 'react-toastify';
 
 const Login = () => {
-  const [phone, setPhone] = useState('0244123456');
-  const [pin, setPin] = useState('1234');
+  const [phone, setPhone] = useState('');
+  const [pin, setPin] = useState('');
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState('');
+  const [showPin, setShowPin] = useState(false);
   const navigate = useNavigate();
-  const { login } = useAuth();
-  const { showToast } = useToast();
 
   const handleLogin = async (e) => {
     e.preventDefault();
@@ -21,22 +19,47 @@ const Login = () => {
       return;
     }
 
+    if (pin.length !== 4) {
+      setError('PIN must be exactly 4 digits');
+      return;
+    }
+
     setLoading(true);
     
     try {
-      const credentials = {
-        phone,
-        pin
-      };
-      await login(credentials);
-      showToast('Login successful!', 'success');
-      navigate('/home');
+      const response = await fetch(`${process.env.REACT_APP_API_URL}/api/auth/login`, {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/json',
+        },
+        body: JSON.stringify({ phone, pin }),
+      });
+      
+      const data = await response.json();
+      
+      if (data.success) {
+        // Store user data and token
+        localStorage.setItem('token', data.token);
+        localStorage.setItem('user', JSON.stringify(data.user));
+        
+        toast.success('Login successful!');
+        navigate('/dashboard');
+      } else {
+        setError(data.message || 'Login failed');
+        toast.error(data.message || 'Login failed');
+      }
     } catch (error) {
-      setError(error.message || 'Login failed. Please try again.');
-      showToast(error.message || 'Login failed', 'error');
+      console.error('Login error:', error);
+      setError('Login failed. Please try again.');
+      toast.error('Login failed. Please try again.');
     } finally {
       setLoading(false);
     }
+  };
+
+  const handlePinChange = (value) => {
+    const numericValue = value.replace(/[^0-9]/g, '').slice(0, 4);
+    setPin(numericValue);
   };
 
   return (
@@ -97,21 +120,33 @@ const Login = () => {
                         <i className="bi bi-lock"></i>
                       </span>
                       <input
-                        type="password"
+                        type={showPin ? 'text' : 'password'}
                         id="pin"
                         value={pin}
-                        onChange={(e) => setPin(e.target.value)}
+                        onChange={(e) => handlePinChange(e.target.value)}
                         placeholder="Enter your 4-digit PIN"
                         maxLength="4"
+                        inputMode="numeric"
+                        pattern="[0-9]*"
                         required
                         className="form-control cedi-border border-start-0"
                         style={{ 
                           padding: '12px 16px',
                           borderRadius: '0 12px 12px 0',
                           backgroundColor: '#f8f9fa',
-                          border: '1px solid #dee2e6'
+                          border: '1px solid #dee2e6',
+                          fontSize: '1.2rem',
+                          letterSpacing: showPin ? 'normal' : '0.3rem'
                         }}
                       />
+                      <button
+                        type="button"
+                        className="btn btn-outline-secondary border-start-0"
+                        onClick={() => setShowPin(!showPin)}
+                        style={{ borderRadius: '0 12px 12px 0' }}
+                      >
+                        <i className={`bi ${showPin ? 'bi-eye-slash' : 'bi-eye'}`}></i>
+                      </button>
                     </div>
                   </div>
 

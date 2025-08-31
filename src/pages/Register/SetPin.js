@@ -37,12 +37,27 @@ const SetPin = () => {
 
     setLoading(true);
     
-    // Simulate API call
-    setTimeout(() => {
-      setLoading(false);
+    try {
+      // Get phone number from localStorage
+      const phoneNumber = localStorage.getItem('registrationPhone');
+      
+      if (!phoneNumber) {
+        setError('Phone number not found. Please start registration again.');
+        setLoading(false);
+        return;
+      }
+      
+      // Save PIN to localStorage
       localStorage.setItem('userPin', pin);
+      
+      // Navigate to personal info form
       navigate('/personal-info');
-    }, 1000);
+    } catch (error) {
+      console.error('Error setting PIN:', error);
+      setError('Failed to set PIN. Please try again.');
+    } finally {
+      setLoading(false);
+    }
   };
 
   const handlePinChange = (value, isConfirm = false) => {
