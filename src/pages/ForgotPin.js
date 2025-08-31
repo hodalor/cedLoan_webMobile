@@ -26,7 +26,7 @@ const ForgotPin = () => {
     setLoading(true);
     
     try {
-      const response = await fetch(`${process.env.REACT_APP_API_URL}/api/auth/reset-pin-request`, {
+      const response = await fetch(`${process.env.REACT_APP_API_URL}/auth/reset-pin-request`, {
         method: 'POST',
         headers: {
           'Content-Type': 'application/json',
@@ -101,7 +101,7 @@ const ForgotPin = () => {
     setLoading(true);
     
     try {
-      const response = await fetch(`${process.env.REACT_APP_API_URL}/api/auth/reset-pin-verify`, {
+      const response = await fetch(`${process.env.REACT_APP_API_URL}/auth/reset-pin-verify`, {
         method: 'POST',
         headers: {
           'Content-Type': 'application/json',

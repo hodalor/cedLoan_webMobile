@@ -180,7 +180,7 @@ const IdVerification = () => {
       };
       
       // Submit complete registration to backend
-      const response = await fetch(`${process.env.REACT_APP_API_URL}/api/auth/register-phone`, {
+      const response = await fetch(`${process.env.REACT_APP_API_URL}/auth/register-phone`, {
         method: 'POST',
         headers: {
           'Content-Type': 'application/json',

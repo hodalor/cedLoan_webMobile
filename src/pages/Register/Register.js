@@ -114,7 +114,7 @@ const Register = () => {
   // Function to check if phone number exists in database
   const checkPhoneExists = async (phoneNumber) => {
     try {
-      const response = await fetch(`${process.env.REACT_APP_API_URL}/api/auth/check-phone`, {
+      const response = await fetch(`${process.env.REACT_APP_API_URL}/auth/check-phone`, {
         method: 'POST',
         headers: {
           'Content-Type': 'application/json',
