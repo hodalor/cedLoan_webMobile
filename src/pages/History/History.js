@@ -16,10 +16,13 @@ const History = () => {
   useEffect(() => {
     const fetchTransactions = async () => {
       try {
-        const [loans, payments] = await Promise.all([
+        const [loansResponse, paymentsResponse] = await Promise.all([
           loansAPI.getUserLoans(),
           paymentsAPI.getUserPayments()
         ]);
+        
+        const loans = loansResponse.loans || [];
+        const payments = paymentsResponse.payments || [];
         
         const allTransactions = [];
         
@@ -31,8 +34,8 @@ const History = () => {
             amount: loan.amount,
             currency: 'GHS',
             status: loan.status,
-            date: new Date(loan.createdAt),
-            description: `Loan disbursement - ${loan.duration} days`
+            date: new Date(loan.applicationDate || loan.createdAt),
+            description: `Loan Application - ${loan.duration} month(s)`
           });
         });
         

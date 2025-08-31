@@ -9,28 +9,40 @@ const Home = () => {
   const [userStats, setUserStats] = useState({
     availableCredit: 0,
     loansCompleted: 0,
-    creditScore: 750
+    creditScore: 0
   });
+  const [userProfile, setUserProfile] = useState(null);
   const [loading, setLoading] = useState(true);
 
   useEffect(() => {
     const fetchUserData = async () => {
       try {
-        const [userProfile, userLoans] = await Promise.all([
+        const [profileResponse, loansResponse] = await Promise.all([
            usersAPI.getProfile(),
            loansAPI.getUserLoans()
          ]);
         
-        const completedLoans = userLoans.filter(loan => loan.status === 'completed').length;
-        const availableCredit = userProfile.creditLimit || 5000;
+        const profile = profileResponse.user;
+        const loans = loansResponse.loans || [];
+        
+        setUserProfile(profile);
+        
+        const completedLoans = loans.filter(loan => loan.status === 'completed').length;
+        const availableCredit = profile.creditLimit || 5000;
         
         setUserStats({
           availableCredit,
           loansCompleted: completedLoans,
-          creditScore: userProfile.creditScore || 750
+          creditScore: profile.creditScore || 750
         });
       } catch (error) {
         console.error('Error fetching user data:', error);
+        // Set default values on error
+        setUserStats({
+          availableCredit: 0,
+          loansCompleted: 0,
+          creditScore: 0
+        });
       } finally {
         setLoading(false);
       }
@@ -38,6 +50,8 @@ const Home = () => {
 
     if (user) {
       fetchUserData();
+    } else {
+      setLoading(false);
     }
   }, [user]);
 
@@ -47,7 +61,7 @@ const Home = () => {
         <div className="col-12">
           <div className="card">
             <div className="card-body text-center">
-              <h2 className="card-title mb-4">Welcome{user?.firstName ? `, ${user.firstName}` : ''}</h2>
+              <h2 className="card-title mb-4">Welcome{userProfile?.personalInfo?.firstName ? `, ${userProfile.personalInfo.firstName}` : (user?.firstName ? `, ${user.firstName}` : '')}</h2>
               <p className="card-text mb-4">
                 Your trusted partner for quick and easy loans
               </p>
@@ -57,7 +71,7 @@ const Home = () => {
                   <div className="card bg-primary text-white h-100">
                     <div className="card-body d-flex flex-column justify-content-center">
                       <h5 className="card-title">Apply for Loan</h5>
-                      <p className="card-text">Get instant loans up to GHS 5,000</p>
+                      <p className="card-text">Get instant loans up to GHS {userStats.availableCredit.toLocaleString()}</p>
                       <button 
                         className="btn btn-light btn-sm mt-auto"
                         onClick={() => navigate('/loan-application')}

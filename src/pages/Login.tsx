@@ -1,7 +1,9 @@
 import React, { useState } from 'react';
-import { useNavigate, Link } from 'react-router-dom';
+import { useNavigate } from 'react-router-dom';
 import { Formik, Form, Field, ErrorMessage } from 'formik';
 import * as Yup from 'yup';
+import { useAuth } from '../contexts/AuthContext';
+import { authAPI } from '../services/api';
 
 const Login: React.FC = () => {
   const navigate = useNavigate();
@@ -21,12 +23,26 @@ const Login: React.FC = () => {
       .matches(/^\d{4}$/, 'PIN must be 4 digits'),
   });
 
-  const handleSubmit = (values: typeof initialValues) => {
-    // In a real app, you would validate credentials with an API
-    // For now, we'll simulate a successful login
-    localStorage.setItem('isAuthenticated', 'true');
-    localStorage.setItem('phoneNumber', values.phoneNumber);
-    navigate('/home');
+  const { login } = useAuth();
+
+  const handleSubmit = async (values: typeof initialValues) => {
+    try {
+      setError('');
+      const response = await authAPI.login({
+        phoneNumber: values.phoneNumber,
+        pin: values.pin
+      });
+      
+      if (response.token) {
+        login(response.token, response.user);
+        navigate('/home');
+      } else {
+        setError('Invalid credentials. Please try again.');
+      }
+    } catch (error: any) {
+      console.error('Login error:', error);
+      setError(error.message || 'Login failed. Please try again.');
+    }
   };
 
   return (

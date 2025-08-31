@@ -1,5 +1,6 @@
 import React, { useState } from 'react';
 import { useNavigate } from 'react-router-dom';
+import { usersAPI } from '../../services/api';
 
 const EducationInfo = () => {
   const [formData, setFormData] = useState({
@@ -53,12 +54,16 @@ const EducationInfo = () => {
     
     setLoading(true);
     
-    // Simulate API call
-    setTimeout(() => {
-      setLoading(false);
+    try {
+      await usersAPI.updateEducationInfo(formData);
       localStorage.setItem('educationInfo', JSON.stringify(formData));
       navigate('/emergency-contacts');
-    }, 1000);
+    } catch (error) {
+      console.error('Error updating education info:', error);
+      alert('Failed to save education information. Please try again.');
+    } finally {
+      setLoading(false);
+    }
   };
 
   const currentYear = new Date().getFullYear();

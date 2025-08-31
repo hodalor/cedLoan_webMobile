@@ -80,7 +80,7 @@ export const SocketProvider = ({ children }) => {
         setIsConnected(false);
       }
     }
-  }, [user, showError, showSuccess, showInfo, socket]);
+  }, [user, showError, showSuccess, showInfo]);
 
   // Function to emit events
   const emitEvent = (eventName, data) => {

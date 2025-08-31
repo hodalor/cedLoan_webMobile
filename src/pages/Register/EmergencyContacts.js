@@ -1,5 +1,6 @@
 import React, { useState } from 'react';
 import { useNavigate } from 'react-router-dom';
+import { usersAPI } from '../../services/api';
 
 const EmergencyContacts = () => {
   const [contacts, setContacts] = useState([
@@ -91,12 +92,16 @@ const EmergencyContacts = () => {
     
     setLoading(true);
     
-    // Simulate API call
-    setTimeout(() => {
-      setLoading(false);
+    try {
+      await usersAPI.updateEmergencyContacts(contacts);
       localStorage.setItem('emergencyContacts', JSON.stringify(contacts));
       navigate('/id-verification');
-    }, 1000);
+    } catch (error) {
+      console.error('Error updating emergency contacts:', error);
+      alert('Failed to save emergency contacts. Please try again.');
+    } finally {
+      setLoading(false);
+    }
   };
 
   const addContact = () => {

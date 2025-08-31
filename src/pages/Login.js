@@ -10,29 +10,53 @@ const Login = () => {
   const [showPin, setShowPin] = useState(false);
   const navigate = useNavigate();
 
+  // Format phone number to include +233 prefix
+  const formatPhoneNumber = (phoneNumber) => {
+    // Remove any existing country code and non-numeric characters
+    let cleanPhone = phoneNumber.replace(/[^0-9]/g, '');
+    
+    // Remove +233 if it exists
+    if (cleanPhone.startsWith('233')) {
+      cleanPhone = cleanPhone.substring(3);
+    }
+    
+    // Remove leading 0 if it exists
+    if (cleanPhone.startsWith('0')) {
+      cleanPhone = cleanPhone.substring(1);
+    }
+    
+    // Add +233 prefix
+    return `+233${cleanPhone}`;
+  };
+
   const handleLogin = async (e) => {
     e.preventDefault();
     setError('');
     
     if (!phone || !pin) {
       setError('Please enter both phone number and PIN');
+      toast.error('Please enter both phone number and PIN');
       return;
     }
 
     if (pin.length !== 4) {
       setError('PIN must be exactly 4 digits');
+      toast.error('PIN must be exactly 4 digits');
       return;
     }
 
     setLoading(true);
     
     try {
+      // Format phone number with +233 prefix
+      const formattedPhone = formatPhoneNumber(phone);
+      
       const response = await fetch(`${process.env.REACT_APP_API_URL}/auth/login`, {
         method: 'POST',
         headers: {
           'Content-Type': 'application/json',
         },
-        body: JSON.stringify({ phone, pin }),
+        body: JSON.stringify({ phone: formattedPhone, pin }),
       });
       
       const data = await response.json();
@@ -41,17 +65,19 @@ const Login = () => {
         // Store user data and token
         localStorage.setItem('token', data.token);
         localStorage.setItem('user', JSON.stringify(data.user));
+        localStorage.setItem('isAuthenticated', 'true');
         
-        toast.success('Login successful!');
-        navigate('/dashboard');
+        toast.success('Login successful! Welcome back.');
+        navigate('/home');
       } else {
-        setError(data.message || 'Login failed');
-        toast.error(data.message || 'Login failed');
+        setError(data.message || 'Invalid credentials');
+        toast.error(data.message || 'Invalid credentials');
       }
     } catch (error) {
       console.error('Login error:', error);
-      setError('Login failed. Please try again.');
-      toast.error('Login failed. Please try again.');
+      const errorMessage = 'Login failed. Please check your connection and try again.';
+      setError(errorMessage);
+      toast.error(errorMessage);
     } finally {
       setLoading(false);
     }

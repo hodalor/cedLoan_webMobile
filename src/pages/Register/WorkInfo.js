@@ -1,5 +1,6 @@
 import React, { useState } from 'react';
 import { useNavigate } from 'react-router-dom';
+import { usersAPI } from '../../services/api';
 
 const WorkInfo = () => {
   const [formData, setFormData] = useState({
@@ -77,12 +78,16 @@ const WorkInfo = () => {
     
     setLoading(true);
     
-    // Simulate API call
-    setTimeout(() => {
-      setLoading(false);
+    try {
+      await usersAPI.updateWorkInfo(formData);
       localStorage.setItem('workInfo', JSON.stringify(formData));
       navigate('/education-info');
-    }, 1000);
+    } catch (error) {
+      console.error('Error updating work info:', error);
+      alert('Failed to save work information. Please try again.');
+    } finally {
+      setLoading(false);
+    }
   };
 
   const isEmployed = formData.employmentStatus === 'employed';

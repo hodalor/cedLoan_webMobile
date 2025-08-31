@@ -1,5 +1,6 @@
 import React, { useState, useEffect } from 'react';
 import { useNavigate } from 'react-router-dom';
+import { authAPI } from '../../services/api';
 
 const VerifyOTP: React.FC = () => {
   const navigate = useNavigate();
@@ -43,24 +44,36 @@ const VerifyOTP: React.FC = () => {
   }, [timer]);
 
   // Resend OTP
-  const handleResendOTP = () => {
+  const handleResendOTP = async () => {
     if (timer === 0) {
       setIsResending(true);
-      // Simulate OTP resend
-      setTimeout(() => {
+      try {
+        await authAPI.sendOTP(phoneNumber);
         setTimer(60);
+      } catch (error) {
+        console.error('Error resending OTP:', error);
+        alert('Failed to resend OTP. Please try again.');
+      } finally {
         setIsResending(false);
-      }, 1500);
+      }
     }
   };
 
   // Verify OTP
-  const handleVerify = () => {
+  const handleVerify = async () => {
     const enteredOTP = otp.join('');
-    // In a real app, you would validate the OTP with an API
-    // For now, we'll simulate a successful verification
     if (enteredOTP.length === 4) {
-      navigate('/register/set-pin');
+      try {
+        const response = await authAPI.verifyOTP(phoneNumber, enteredOTP);
+        if (response.success) {
+          navigate('/register/set-pin');
+        } else {
+          alert('Invalid OTP. Please try again.');
+        }
+      } catch (error) {
+        console.error('Error verifying OTP:', error);
+        alert('Failed to verify OTP. Please try again.');
+      }
     }
   };
 

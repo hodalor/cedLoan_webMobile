@@ -114,15 +114,9 @@ const LoanApplication = () => {
       
       const loanData = {
         amount: loanAmount,
-        duration: loanTerm,
-        purpose: 'Personal loan',
-        interestRate: fees.interestRate,
-        totalRepayment: totalRepayment,
-        fees: {
-          serviceFee: fees.serviceFeeAmount,
-          adminFee: fees.adminFeeAmount,
-          commitmentFee: fees.commitmentFeeAmount
-        }
+        duration: Math.ceil(loanTerm / 30), // Convert days to months
+        purpose: 'other', // Valid enum value from backend
+        termsAccepted: termsAccepted
       };
       
       await loansAPI.applyForLoan(loanData);
@@ -193,18 +187,7 @@ const LoanApplication = () => {
     setMobileNumber('');
   };
   
-  // Simulate admin actions for demo purposes
-  const simulateAdminReject = () => {
-    setLoanStatus('rejected');
-    alert('Loan application has been rejected. You can apply for a new loan.');
-  };
-  
-  const simulateAdminApprove = () => {
-    const totalAmount = calculateTotalRepayment();
-    setLoanStatus('approved');
-    setRemainingBalance(totalAmount);
-    alert('Congratulations! Your loan has been approved. You can now make payment.');
-  };
+
   
   return (
     <div className="container mt-4">
@@ -399,20 +382,7 @@ const LoanApplication = () => {
            </div>
          )}
          
-         {/* Admin Simulation Buttons (for demo purposes) */}
-         {loanStatus === 'under_review' && (
-           <div className="mb-3">
-             <small className="text-muted">Admin Actions (Demo):</small>
-             <div className="d-flex gap-2 mt-1">
-               <button className="btn btn-sm btn-outline-success" onClick={simulateAdminApprove}>
-                 Approve Loan
-               </button>
-               <button className="btn btn-sm btn-outline-danger" onClick={simulateAdminReject}>
-                 Reject Loan
-               </button>
-             </div>
-           </div>
-         )}
+
         
         <div className="d-grid gap-2 mt-4 page-bottom-actions">
           {loanStatus === 'approved' ? (

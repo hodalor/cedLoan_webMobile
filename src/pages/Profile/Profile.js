@@ -1,32 +1,62 @@
 import React, { useState, useEffect } from 'react';
 import { useNavigate } from 'react-router-dom';
+import { useAuth } from '../../contexts/AuthContext';
+import { usersAPI, authAPI } from '../../services/api';
 
 const Profile = () => {
   const navigate = useNavigate();
   const [user, setUser] = useState(null);
   const [isLoading, setIsLoading] = useState(true);
 
-  // Mock data - in a real app, this would come from an API
-  useEffect(() => {
-    // Simulate API call
-    setTimeout(() => {
-      const mockUser = {
-        id: 'U12345',
-        name: 'Prince H',
-        email: 'prince@quickmul.com',
-        phone: '+233 50 123 4567',
-        idVerified: true,
-        accountCreated: new Date(2023, 5, 10),
-        creditScore: 750
-      };
-      setUser(mockUser);
-      setIsLoading(false);
-    }, 1000);
-  }, []);
+  const { user: authUser, logout } = useAuth();
 
-  const handleLogout = () => {
-    // In a real app, this would clear authentication tokens
-    navigate('/login');
+  useEffect(() => {
+    const fetchUserProfile = async () => {
+      if (!authUser) {
+        navigate('/login');
+        return;
+      }
+
+      try {
+        setIsLoading(true);
+        const profileResponse = await usersAPI.getProfile();
+        const profile = profileResponse.profile || profileResponse;
+        
+        const userData = {
+          id: authUser.userId || profile._id,
+          name: profile.personalInfo?.firstName && profile.personalInfo?.lastName 
+            ? `${profile.personalInfo.firstName} ${profile.personalInfo.lastName}`
+            : authUser.phoneNumber || 'User',
+          email: profile.personalInfo?.email || 'Not provided',
+          phone: authUser.phoneNumber || profile.personalInfo?.phoneNumber || 'Not provided',
+          idVerified: profile.idVerification?.verified || false,
+          accountCreated: new Date(profile.createdAt || authUser.createdAt || Date.now()),
+          creditScore: profile.creditScore || 0
+        };
+        
+        setUser(userData);
+      } catch (error) {
+        console.error('Error fetching profile:', error);
+        setUser(null);
+      } finally {
+        setIsLoading(false);
+      }
+    };
+
+    fetchUserProfile();
+  }, [authUser, navigate]);
+
+  const handleLogout = async () => {
+    try {
+      await authAPI.logout();
+      logout();
+      navigate('/login');
+    } catch (error) {
+      console.error('Logout error:', error);
+      // Force logout even if API call fails
+      logout();
+      navigate('/login');
+    }
   };
 
   return (

@@ -225,6 +225,20 @@ export const loansAPI = {
     });
     return handleResponse(response);
   },
+
+  getUserLoans: async (page = 1, limit = 10, status = '') => {
+    const params = new URLSearchParams({
+      page: page.toString(),
+      limit: limit.toString(),
+      ...(status && { status }),
+    });
+    
+    const response = await fetch(`${API_BASE_URL}/loans/my-loans?${params}`, {
+      method: 'GET',
+      headers: createHeaders(),
+    });
+    return handleResponse(response);
+  },
 };
 
 // Payments API
@@ -270,6 +284,20 @@ export const paymentsAPI = {
 
   getPaymentStats: async () => {
     const response = await fetch(`${API_BASE_URL}/payments/stats`, {
+      method: 'GET',
+      headers: createHeaders(),
+    });
+    return handleResponse(response);
+  },
+
+  getUserPayments: async (page = 1, limit = 10, status = '') => {
+    const params = new URLSearchParams({
+      page: page.toString(),
+      limit: limit.toString(),
+      ...(status && { status }),
+    });
+    
+    const response = await fetch(`${API_BASE_URL}/payments/history?${params}`, {
       method: 'GET',
       headers: createHeaders(),
     });
