@@ -54,6 +54,15 @@ const Register = () => {
       // Format phone number to international format
       const formattedPhone = phoneAuthService.formatPhoneNumber(phone);
       
+      // Check if phone number already exists in database
+      const phoneExists = await checkPhoneExists(formattedPhone);
+      if (phoneExists) {
+        setError('An account with this phone number already exists. Please login instead.');
+        showToast('An account with this phone number already exists. Please login instead.', 'error');
+        setLoading(false);
+        return;
+      }
+      
       // Send verification code using Firebase
       await phoneAuthService.sendVerificationCode(formattedPhone, 'recaptcha-container');
       
