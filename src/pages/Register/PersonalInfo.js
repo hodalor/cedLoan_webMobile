@@ -89,63 +89,13 @@ const PersonalInfo = () => {
       // Save personal info to localStorage
       localStorage.setItem('personalInfo', JSON.stringify(formData));
       
-      // Get all registration data from localStorage
-      const phoneNumber = localStorage.getItem('registrationPhone');
-      const pin = localStorage.getItem('userPin');
+      toast.success('Personal information saved!');
       
-      if (!phoneNumber || !pin) {
-        toast.error('Registration data incomplete. Please start over.');
-        navigate('/register');
-        return;
-      }
-      
-      // Prepare complete registration data
-      const registrationData = {
-        phoneNumber: phoneNumber,
-        pin: pin,
-        personalInfo: {
-          firstName: formData.firstName,
-          lastName: formData.lastName,
-          email: formData.email,
-          dateOfBirth: formData.dateOfBirth,
-          gender: formData.gender,
-          maritalStatus: formData.maritalStatus,
-          address: formData.address,
-          city: formData.city,
-          state: formData.state,
-          postalCode: formData.postalCode
-        }
-      };
-      
-      // Submit registration to backend
-      const response = await fetch(`${process.env.REACT_APP_API_URL}/api/auth/register-phone`, {
-        method: 'POST',
-        headers: {
-          'Content-Type': 'application/json',
-        },
-        body: JSON.stringify(registrationData),
-      });
-      
-      const data = await response.json();
-      
-      if (data.success) {
-        // Clear registration data from localStorage
-        localStorage.removeItem('registrationPhone');
-        localStorage.removeItem('userPin');
-        localStorage.removeItem('personalInfo');
-        
-        // Store user data and token
-        localStorage.setItem('token', data.token);
-        localStorage.setItem('user', JSON.stringify(data.user));
-        
-        toast.success('Registration completed successfully!');
-        navigate('/dashboard');
-      } else {
-        toast.error(data.message || 'Registration failed');
-      }
+      // Navigate to next step - Work Information
+      navigate('/work-info');
     } catch (error) {
-      console.error('Registration error:', error);
-      toast.error('Registration failed. Please try again.');
+      console.error('Error saving personal info:', error);
+      toast.error('Failed to save personal information. Please try again.');
     } finally {
       setLoading(false);
     }

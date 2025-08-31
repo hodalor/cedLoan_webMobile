@@ -43,6 +43,8 @@ const EmergencyContacts = () => {
 
   const validateForm = () => {
     const newErrors = {};
+    const userPhone = localStorage.getItem('registrationPhone');
+    const phoneNumbers = [];
     
     contacts.forEach((contact, index) => {
       const contactNum = index + 1;
@@ -59,6 +61,18 @@ const EmergencyContacts = () => {
         newErrors[`${contact.id}_phone`] = `Contact ${contactNum} phone is required`;
       } else if (contact.phone.length < 10) {
         newErrors[`${contact.id}_phone`] = `Contact ${contactNum} phone must be valid`;
+      } else {
+        // Check if phone number matches user's registered phone
+        if (contact.phone === userPhone) {
+          newErrors[`${contact.id}_phone`] = `Contact ${contactNum} phone cannot be the same as your registered phone number`;
+        }
+        
+        // Check for duplicate phone numbers
+        if (phoneNumbers.includes(contact.phone)) {
+          newErrors[`${contact.id}_phone`] = `Contact ${contactNum} phone number is already used by another emergency contact`;
+        } else {
+          phoneNumbers.push(contact.phone);
+        }
       }
       
       if (contact.email && !/\S+@\S+\.\S+/.test(contact.email)) {

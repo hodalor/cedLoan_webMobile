@@ -1,5 +1,6 @@
 import React, { useState } from 'react';
 import { useNavigate } from 'react-router-dom';
+import { toast } from 'react-toastify';
 
 const IdVerification = () => {
   const [documents, setDocuments] = useState({
@@ -120,25 +121,100 @@ const IdVerification = () => {
     
     setLoading(true);
     
-    // Simulate API call for document upload
-    setTimeout(() => {
-      setLoading(false);
-      // Store document info (in real app, you'd upload to server)
-      const documentInfo = {
-        idType: documents.idType,
-        idNumber: documents.idNumber,
-        documentsUploaded: {
-          idFront: !!documents.idFront,
-          idBack: !!documents.idBack,
-          selfie: !!documents.selfie,
-          proofOfAddress: !!documents.proofOfAddress
+    try {
+      // Get all registration data from localStorage
+      const phoneNumber = localStorage.getItem('registrationPhone');
+      const pin = localStorage.getItem('userPin');
+      const personalInfo = JSON.parse(localStorage.getItem('personalInfo') || '{}');
+      const workInfo = JSON.parse(localStorage.getItem('workInfo') || '{}');
+      const educationInfo = JSON.parse(localStorage.getItem('educationInfo') || '{}');
+      const emergencyContacts = JSON.parse(localStorage.getItem('emergencyContacts') || '[]');
+      
+      if (!phoneNumber || !pin) {
+         toast.error('Registration data incomplete. Please start over.');
+         navigate('/register');
+         return;
+       }
+      
+      // Prepare complete registration data
+      const registrationData = {
+        phoneNumber: phoneNumber,
+        pin: pin,
+        personalInfo: {
+          firstName: personalInfo.firstName,
+          lastName: personalInfo.lastName,
+          email: personalInfo.email,
+          dateOfBirth: personalInfo.dateOfBirth,
+          gender: personalInfo.gender,
+          maritalStatus: personalInfo.maritalStatus,
+          address: personalInfo.address,
+          city: personalInfo.city,
+          state: personalInfo.state,
+          postalCode: personalInfo.postalCode
         },
-        verificationStatus: 'pending'
+        workInfo: {
+          employmentStatus: workInfo.employmentStatus,
+          employer: workInfo.employer,
+          jobTitle: workInfo.jobTitle,
+          monthlyIncome: workInfo.monthlyIncome,
+          workAddress: workInfo.workAddress,
+          yearsOfEmployment: workInfo.yearsOfEmployment
+        },
+        educationInfo: {
+          highestLevel: educationInfo.highestEducation,
+          institution: educationInfo.institution,
+          fieldOfStudy: educationInfo.fieldOfStudy,
+          graduationYear: educationInfo.graduationYear
+        },
+        emergencyContacts: emergencyContacts.map(contact => ({
+          name: contact.name,
+          relationship: contact.relationship,
+          phoneNumber: contact.phone,
+          email: contact.email
+        })),
+        idVerification: {
+          idType: documents.idType,
+          idNumber: documents.idNumber,
+          isVerified: false
+        }
       };
-      localStorage.setItem('idVerification', JSON.stringify(documentInfo));
-      localStorage.setItem('registrationComplete', 'true');
-      navigate('/login');
-    }, 2000);
+      
+      // Submit complete registration to backend
+      const response = await fetch(`${process.env.REACT_APP_API_URL}/api/auth/register-phone`, {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/json',
+        },
+        body: JSON.stringify(registrationData),
+      });
+      
+      const data = await response.json();
+      
+      if (data.success) {
+        // Clear all registration data from localStorage
+        localStorage.removeItem('registrationPhone');
+        localStorage.removeItem('userPin');
+        localStorage.removeItem('personalInfo');
+        localStorage.removeItem('workInfo');
+        localStorage.removeItem('educationInfo');
+        localStorage.removeItem('emergencyContacts');
+        localStorage.removeItem('idVerification');
+        
+        // Store user data and token
+        localStorage.setItem('token', data.token);
+        localStorage.setItem('user', JSON.stringify(data.user));
+        
+        toast.success('Registration completed successfully!');
+         navigate('/home');
+      } else {
+        toast.error(data.message || 'Registration failed');
+      }
+    } catch (error) {
+      console.error('Registration error:', error);
+      toast.error('Registration failed. Please try again.');
+    } finally {
+      setLoading(false);
+    }
   };
 
   const FileUploadBox = ({ fieldName, label, required, accept, description }) => {
