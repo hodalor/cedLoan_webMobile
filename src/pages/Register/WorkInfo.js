@@ -1,6 +1,6 @@
 import React, { useState } from 'react';
 import { useNavigate } from 'react-router-dom';
-import { usersAPI } from '../../services/api';
+import { toast } from 'react-toastify';
 
 const WorkInfo = () => {
   const [formData, setFormData] = useState({
@@ -79,12 +79,16 @@ const WorkInfo = () => {
     setLoading(true);
     
     try {
-      await usersAPI.updateWorkInfo(formData);
+      // Save work info to localStorage (same pattern as PersonalInfo)
       localStorage.setItem('workInfo', JSON.stringify(formData));
+      
+      toast.success('Work information saved!');
+      
+      // Navigate to next step - Education Information
       navigate('/education-info');
     } catch (error) {
-      console.error('Error updating work info:', error);
-      alert('Failed to save work information. Please try again.');
+      console.error('Error saving work info:', error);
+      toast.error('Failed to save work information. Please try again.');
     } finally {
       setLoading(false);
     }
