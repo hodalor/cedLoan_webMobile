@@ -162,7 +162,7 @@ const IdVerification = () => {
         },
         educationInfo: {
           highestLevel: educationInfo.highestEducation,
-          institution: educationInfo.institution,
+          institution: educationInfo.institutionName,
           fieldOfStudy: educationInfo.fieldOfStudy,
           graduationYear: educationInfo.graduationYear
         },
