@@ -1,0 +1,82 @@
+<!DOCTYPE html>
+<html>
+<head>
+    <title>Debug Authentication</title>
+</head>
+<body>
+    <h1>CEDI Loan App - Authentication Debug</h1>
+    <div id="results"></div>
+    
+    <script>
+        const API_BASE_URL = 'http://localhost:5000/api';
+        const resultsDiv = document.getElementById('results');
+        
+        function log(message) {
+            resultsDiv.innerHTML += '<p>' + message + '</p>';
+            console.log(message);
+        }
+        
+        // Check if token exists in localStorage
+        const token = localStorage.getItem('token');
+        log('Token in localStorage: ' + (token ? 'EXISTS' : 'NOT FOUND'));
+        
+        if (token) {
+            log('Token preview: ' + token.substring(0, 50) + '...');
+            
+            // Test the token with a protected endpoint
+            fetch(API_BASE_URL + '/users/work-info', {
+                method: 'PUT',
+                headers: {
+                    'Content-Type': 'application/json',
+                    'Authorization': 'Bearer ' + token
+                },
+                body: JSON.stringify({ test: 'data' })
+            })
+            .then(response => {
+                log('Response status: ' + response.status);
+                return response.json();
+            })
+            .then(data => {
+                log('Response data: ' + JSON.stringify(data));
+            })
+            .catch(error => {
+                log('Error: ' + error.message);
+            });
+        } else {
+            log('No token found. User needs to log in first.');
+            
+            // Test without token
+            fetch(API_BASE_URL + '/users/work-info', {
+                method: 'PUT',
+                headers: {
+                    'Content-Type': 'application/json'
+                },
+                body: JSON.stringify({ test: 'data' })
+            })
+            .then(response => {
+                log('Response status (no token): ' + response.status);
+                return response.json();
+            })
+            .then(data => {
+                log('Response data (no token): ' + JSON.stringify(data));
+            })
+            .catch(error => {
+                log('Error (no token): ' + error.message);
+            });
+        }
+        
+        // Test health endpoint
+        fetch(API_BASE_URL + '/health')
+        .then(response => {
+            log('Health endpoint status: ' + response.status);
+            return response.json();
+        })
+        .then(data => {
+            log('Health endpoint data: ' + JSON.stringify(data));
+        })
+        .catch(error => {
+            log('Health endpoint error: ' + error.message);
+        });
+    </script>
+</body>
+</html>
