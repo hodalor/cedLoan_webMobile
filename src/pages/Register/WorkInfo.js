@@ -5,11 +5,11 @@ import { usersAPI } from '../../services/api';
 const WorkInfo = () => {
   const [formData, setFormData] = useState({
     employmentStatus: '',
-    companyName: '',
+    employer: '',
     jobTitle: '',
     workAddress: '',
     monthlyIncome: '',
-    employmentDuration: '',
+    yearsOfEmployment: '',
     workPhone: '',
     supervisorName: '',
     supervisorPhone: '',
@@ -42,19 +42,19 @@ const WorkInfo = () => {
     if (!formData.employmentStatus) newErrors.employmentStatus = 'Employment status is required';
     
     if (formData.employmentStatus === 'employed') {
-      if (!formData.companyName.trim()) newErrors.companyName = 'Company name is required';
+      if (!formData.employer.trim()) newErrors.employer = 'Company name is required';
       if (!formData.jobTitle.trim()) newErrors.jobTitle = 'Job title is required';
       if (!formData.workAddress.trim()) newErrors.workAddress = 'Work address is required';
       if (!formData.monthlyIncome) newErrors.monthlyIncome = 'Monthly income is required';
-      if (!formData.employmentDuration) newErrors.employmentDuration = 'Employment duration is required';
+      if (!formData.yearsOfEmployment) newErrors.yearsOfEmployment = 'Employment duration is required';
     }
     
     if (formData.employmentStatus === 'self-employed') {
-      if (!formData.companyName.trim()) newErrors.companyName = 'Business name is required';
+      if (!formData.employer.trim()) newErrors.employer = 'Business name is required';
       if (!formData.jobTitle.trim()) newErrors.jobTitle = 'Position/Role is required';
       if (!formData.workAddress.trim()) newErrors.workAddress = 'Business address is required';
       if (!formData.monthlyIncome) newErrors.monthlyIncome = 'Monthly income is required';
-      if (!formData.employmentDuration) newErrors.employmentDuration = 'Business duration is required';
+      if (!formData.yearsOfEmployment) newErrors.yearsOfEmployment = 'Business duration is required';
     }
     
     // Validate monthly income is a positive number
@@ -138,13 +138,13 @@ const WorkInfo = () => {
                             </label>
                             <input
                               type="text"
-                              name="companyName"
-                              value={formData.companyName}
+                              name="employer"
+                              value={formData.employer}
                               onChange={handleInputChange}
-                              className={`form-control cedi-form-input ${errors.companyName ? 'is-invalid' : ''}`}
+                              className={`form-control cedi-form-input ${errors.employer ? 'is-invalid' : ''}`}
                               placeholder={isEmployed ? 'Enter company name' : 'Enter business name'}
                             />
-                            {errors.companyName && <div className="invalid-feedback">{errors.companyName}</div>}
+                            {errors.employer && <div className="invalid-feedback">{errors.employer}</div>}
                           </div>
                         </div>
 
@@ -204,14 +204,16 @@ const WorkInfo = () => {
                               {isEmployed ? 'Employment Duration *' : 'Business Duration *'}
                             </label>
                             <input
-                              type="text"
-                              name="employmentDuration"
-                              value={formData.employmentDuration}
+                              type="number"
+                              name="yearsOfEmployment"
+                              value={formData.yearsOfEmployment}
                               onChange={handleInputChange}
-                              className={`form-control cedi-form-input ${errors.employmentDuration ? 'is-invalid' : ''}`}
-                              placeholder="e.g., 2 years 6 months"
+                              className={`form-control cedi-form-input ${errors.yearsOfEmployment ? 'is-invalid' : ''}`}
+                              placeholder="e.g., 2.5"
+                              min="0"
+                              step="0.1"
                             />
-                            {errors.employmentDuration && <div className="invalid-feedback">{errors.employmentDuration}</div>}
+                            {errors.yearsOfEmployment && <div className="invalid-feedback">{errors.yearsOfEmployment}</div>}
                           </div>
                         </div>
                       </div>
