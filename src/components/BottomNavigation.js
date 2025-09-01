@@ -8,7 +8,7 @@ const BottomNavigation = () => {
 
   const navItems = [
     { path: '/home', label: 'Home', icon: '🏠' },
-    { path: '/loan-application', label: 'Apply', icon: '💰' },
+    { path: '/apply', label: 'Apply', icon: '💰' },
     { path: '/history', label: 'History', icon: '📜' },
     { path: '/profile', label: 'Profile', icon: '👤' },
   ];

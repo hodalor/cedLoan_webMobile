@@ -82,7 +82,7 @@ const App: React.FC = () => {
         {/* Bottom Navigation for Protected Routes */}
         <Routes>
           <Route
-            path="/(home|loan-application|history|profile)"
+            path="/(home|apply|history|profile)"
             element={<BottomNavigation />}
           />
         </Routes>

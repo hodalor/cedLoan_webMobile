@@ -229,7 +229,7 @@ const History = () => {
               <div className="page-bottom-actions">
                 <button 
                   className="btn btn-primary btn-lg btn-custom"
-                  onClick={() => navigate('/loan-application')}
+                  onClick={() => navigate('/apply')}
                 >
                   🚀 Apply for a Loan
                 </button>

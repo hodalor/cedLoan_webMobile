@@ -20,6 +20,7 @@ import LoanApplication from './pages/LoanApplication/LoanApplication';
 import History from './pages/History/History';
 import Profile from './pages/Profile/Profile';
 
+
 // Import components
 import BottomNavigation from './components/BottomNavigation';
 import ProtectedRoute from './components/ProtectedRoute';
@@ -59,7 +60,8 @@ function App() {
                 </div>
               </ProtectedRoute>
             } />
-            <Route path="/loan-application" element={
+
+            <Route path="/apply" element={
               <ProtectedRoute>
                 <div className="page-container">
                   <LoanApplication />
@@ -67,6 +69,7 @@ function App() {
                 </div>
               </ProtectedRoute>
             } />
+
             <Route path="/history" element={
               <ProtectedRoute>
                 <div className="page-container">
@@ -75,6 +78,7 @@ function App() {
                 </div>
               </ProtectedRoute>
             } />
+
             <Route path="/profile" element={
               <ProtectedRoute>
                 <div className="page-container">
@@ -83,6 +87,8 @@ function App() {
                 </div>
               </ProtectedRoute>
             } />
+
+
 
             {/* Default redirect to login */}
             <Route path="*" element={<Navigate to="/login" />} />

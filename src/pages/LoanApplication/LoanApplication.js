@@ -3,6 +3,7 @@ import { useNavigate } from 'react-router-dom';
 import { useToast } from '../../contexts/ToastContext';
 import { useSocket } from '../../contexts/SocketContext';
 import { loansAPI } from '../../services/api';
+import { loanLevelsAPI } from '../../services/loanLevelsAPI';
 
 const LoanApplication = () => {
   const navigate = useNavigate();
@@ -10,12 +11,20 @@ const LoanApplication = () => {
   useSocket(); // Initialize socket connection
   const [loanAmount, setLoanAmount] = useState(100);
   const [loanTerm, setLoanTerm] = useState(14);
-  const [loanStatus, setLoanStatus] = useState(null); // null, 'under_review', 'rejected', 'approved'
+  const [loanStatus, setLoanStatus] = useState(null); // null, 'pending', 'under-review', 'approved', 'rejected', 'active', 'completed'
+  const [activeLoan, setActiveLoan] = useState(null);
   const [isSubmitting, setIsSubmitting] = useState(false);
   const [termsAccepted, setTermsAccepted] = useState(false);
   const [remainingBalance, setRemainingBalance] = useState(0);
   const [paymentHistory, setPaymentHistory] = useState([]);
   const [showPaymentModal, setShowPaymentModal] = useState(false);
+  const [availableTerms, setAvailableTerms] = useState([7, 14, 30]);
+  const [selectedTerm, setSelectedTerm] = useState(7);
+  const [isLoading, setIsLoading] = useState(true);
+  const [userLevelInfo, setUserLevelInfo] = useState(null);
+  const [currentLevel, setCurrentLevel] = useState(null);
+  const [minAmount, setMinAmount] = useState(100);
+  const [maxAmount, setMaxAmount] = useState(5000);
   
   // Listen for real-time loan status updates
   useEffect(() => {
@@ -39,6 +48,69 @@ const LoanApplication = () => {
     return () => {
       window.removeEventListener('loanStatusUpdate', handleLoanStatusUpdate);
     };
+  }, [showToast]);
+
+  // Check for existing active loans
+  const checkActiveLoan = async () => {
+    try {
+      const response = await loansAPI.getUserLoans();
+      const loans = response.data.loans || [];
+      
+      // Find any active loan (pending, under-review, approved, disbursed, active)
+      const activeLoanFound = loans.find(loan => 
+        ['pending', 'under-review', 'approved', 'disbursed', 'active'].includes(loan.status)
+      );
+      
+      if (activeLoanFound) {
+        setActiveLoan(activeLoanFound);
+        setLoanStatus(activeLoanFound.status);
+        setRemainingBalance(activeLoanFound.remainingBalance || activeLoanFound.totalAmount);
+      } else {
+        setActiveLoan(null);
+        setLoanStatus(null);
+      }
+    } catch (error) {
+      console.error('Error checking active loans:', error);
+    }
+  };
+
+  // Fetch user's current loan level and check for active loans
+  useEffect(() => {
+    const fetchUserData = async () => {
+      setIsLoading(true);
+      try {
+        // Fetch user level information
+        const levelInfo = await loanLevelsAPI.getCurrentUserLevel();
+        setUserLevelInfo(levelInfo.data);
+        setCurrentLevel(levelInfo.data.currentLevel);
+        
+        // Set dynamic loan limits and available terms based on user's level
+        if (levelInfo.data.currentLevel) {
+          setMinAmount(levelInfo.data.currentLevel.minAmount);
+          setMaxAmount(levelInfo.data.currentLevel.maxAmount);
+          setAvailableTerms(levelInfo.data.currentLevel.availableTerms || [7, 14, 30]);
+          setSelectedTerm(levelInfo.data.currentLevel.availableTerms?.[0] || 7);
+          
+          // Adjust loan amount if it's outside the new limits
+          if (loanAmount < levelInfo.data.currentLevel.minAmount) {
+            setLoanAmount(levelInfo.data.currentLevel.minAmount);
+          } else if (loanAmount > levelInfo.data.currentLevel.maxAmount) {
+            setLoanAmount(levelInfo.data.currentLevel.maxAmount);
+          }
+        }
+        
+        // Check for existing active loans
+        await checkActiveLoan();
+        
+      } catch (error) {
+        console.error('Error fetching user data:', error);
+        showToast('Failed to load loan information', 'error');
+      } finally {
+        setIsLoading(false);
+      }
+    };
+
+    fetchUserData();
   }, [showToast]);
   
   // Fee structure based on local law compliance
@@ -101,28 +173,332 @@ const LoanApplication = () => {
   };
   
   const handleTermChange = (days) => {
-    setLoanTerm(days);
+    setSelectedTerm(days);
   };
+
+  // Render different screens based on loan status
+  const renderLoanStatusScreen = () => {
+    if (isLoading) {
+      return (
+        <div className="text-center py-5">
+          <div className="spinner-border text-primary" role="status">
+            <span className="visually-hidden">Loading...</span>
+          </div>
+          <p className="mt-3">Loading loan information...</p>
+        </div>
+      );
+    }
+
+    if (!activeLoan) {
+      return renderLoanApplicationForm();
+    }
+
+    switch (activeLoan.status) {
+      case 'pending':
+      case 'under-review':
+        return renderPendingScreen();
+      case 'approved':
+        return renderApprovedScreen();
+      case 'rejected':
+        return renderRejectedScreen();
+      case 'active':
+      case 'disbursed':
+        return renderActiveRepaymentScreen();
+      case 'completed':
+        return renderCompletedScreen();
+      default:
+        return renderLoanApplicationForm();
+    }
+  };
+
+  // Pending loan screen
+  const renderPendingScreen = () => (
+    <div className="container mt-4">
+      <div className="row justify-content-center">
+        <div className="col-md-8">
+          <div className="card shadow-sm">
+            <div className="card-body text-center py-5">
+              <div className="mb-4">
+                <div className="spinner-border text-warning" style={{width: '3rem', height: '3rem'}} role="status">
+                  <span className="visually-hidden">Loading...</span>
+                </div>
+              </div>
+              <h3 className="text-warning mb-3">📋 Application Under Review</h3>
+              <p className="lead mb-4">Your loan application is being reviewed by our team.</p>
+              
+              <div className="row text-start">
+                <div className="col-md-6">
+                  <h6>Application Details:</h6>
+                  <ul className="list-unstyled">
+                    <li><strong>Amount:</strong> GHS {activeLoan.amount?.toLocaleString()}</li>
+                    <li><strong>Term:</strong> {activeLoan.termInDays} days</li>
+                    <li><strong>Level:</strong> {currentLevel?.name || 'N/A'}</li>
+                    <li><strong>Applied:</strong> {new Date(activeLoan.applicationDate).toLocaleDateString()}</li>
+                  </ul>
+                </div>
+                <div className="col-md-6">
+                  <h6>What's Next:</h6>
+                  <ul className="list-unstyled">
+                    <li>✅ Application received</li>
+                    <li>🔍 Under review</li>
+                    <li>⏳ Decision pending</li>
+                    <li>📧 You'll be notified</li>
+                  </ul>
+                </div>
+              </div>
+              
+              <div className="alert alert-info mt-4">
+                <strong>📞 Need Help?</strong> Contact our support team if you have any questions about your application.
+              </div>
+            </div>
+          </div>
+        </div>
+      </div>
+    </div>
+  );
+
+  // Approved loan screen
+  const renderApprovedScreen = () => (
+    <div className="container mt-4">
+      <div className="row justify-content-center">
+        <div className="col-md-8">
+          <div className="card shadow-sm border-success">
+            <div className="card-body text-center py-5">
+              <div className="text-success mb-4">
+                <i className="fas fa-check-circle" style={{fontSize: '4rem'}}></i>
+              </div>
+              <h3 className="text-success mb-3">🎉 Loan Approved!</h3>
+              <p className="lead mb-4">Congratulations! Your loan has been approved and is ready for disbursement.</p>
+              
+              <div className="row text-start">
+                <div className="col-md-6">
+                  <h6>Loan Details:</h6>
+                  <ul className="list-unstyled">
+                    <li><strong>Amount:</strong> GHS {activeLoan.amount?.toLocaleString()}</li>
+                    <li><strong>Term:</strong> {activeLoan.termInDays} days</li>
+                    <li><strong>Interest Rate:</strong> {currentLevel?.interestRate || 0}%</li>
+                    <li><strong>Total Repayment:</strong> GHS {activeLoan.totalAmount?.toLocaleString()}</li>
+                  </ul>
+                </div>
+                <div className="col-md-6">
+                  <h6>Important Dates:</h6>
+                  <ul className="list-unstyled">
+                    <li><strong>Approved:</strong> {new Date(activeLoan.approvalDate).toLocaleDateString()}</li>
+                    <li><strong>Due Date:</strong> {activeLoan.dueDate ? new Date(activeLoan.dueDate).toLocaleDateString() : 'TBD'}</li>
+                  </ul>
+                </div>
+              </div>
+              
+              {activeLoan.isAutoApproved && (
+                <div className="alert alert-success mt-4">
+                  <strong>⚡ Auto-Approved!</strong> {activeLoan.autoApprovalReason}
+                </div>
+              )}
+              
+              <div className="mt-4">
+                <button className="btn btn-success btn-lg me-3" onClick={() => showToast('Disbursement process initiated!', 'success')}>
+                  💰 Request Disbursement
+                </button>
+                <button className="btn btn-outline-primary" onClick={() => navigate('/history')}>
+                  📋 View Details
+                </button>
+              </div>
+            </div>
+          </div>
+        </div>
+      </div>
+    </div>
+  );
+
+  // Rejected loan screen
+  const renderRejectedScreen = () => (
+    <div className="container mt-4">
+      <div className="row justify-content-center">
+        <div className="col-md-8">
+          <div className="card shadow-sm border-danger">
+            <div className="card-body text-center py-5">
+              <div className="text-danger mb-4">
+                <i className="fas fa-times-circle" style={{fontSize: '4rem'}}></i>
+              </div>
+              <h3 className="text-danger mb-3">❌ Application Not Approved</h3>
+              <p className="lead mb-4">Unfortunately, your loan application was not approved at this time.</p>
+              
+              <div className="alert alert-info text-start">
+                <h6>💡 Tips to Improve Your Application:</h6>
+                <ul className="mb-0">
+                  <li>Complete more loans successfully to build your credit history</li>
+                  <li>Consider applying for a smaller amount</li>
+                  <li>Ensure all your profile information is complete and accurate</li>
+                  <li>Wait for your loan level to improve with successful repayments</li>
+                </ul>
+              </div>
+              
+              <div className="mt-4">
+                <button 
+                  className="btn btn-primary btn-lg me-3" 
+                  onClick={() => {
+                    setActiveLoan(null);
+                    setLoanStatus(null);
+                    showToast('You can now apply for a new loan', 'info');
+                  }}
+                >
+                  🔄 Apply Again
+                </button>
+                <button className="btn btn-outline-secondary" onClick={() => navigate('/profile')}>
+                  👤 Update Profile
+                </button>
+              </div>
+            </div>
+          </div>
+        </div>
+      </div>
+    </div>
+  );
+
+  // Active repayment screen
+  const renderActiveRepaymentScreen = () => (
+    <div className="container mt-4">
+      <div className="row justify-content-center">
+        <div className="col-md-10">
+          <div className="card shadow-sm border-primary">
+            <div className="card-body">
+              <div className="text-center mb-4">
+                <h3 className="text-primary">💳 Active Loan - Repayment</h3>
+                <p className="lead">Manage your active loan and make payments</p>
+              </div>
+              
+              <div className="row">
+                <div className="col-md-6">
+                  <div className="card bg-light">
+                    <div className="card-body">
+                      <h5>Loan Summary</h5>
+                      <ul className="list-unstyled">
+                        <li><strong>Original Amount:</strong> GHS {activeLoan.amount?.toLocaleString()}</li>
+                        <li><strong>Total Amount:</strong> GHS {activeLoan.totalAmount?.toLocaleString()}</li>
+                        <li><strong>Remaining Balance:</strong> <span className="text-danger">GHS {remainingBalance?.toLocaleString()}</span></li>
+                        <li><strong>Due Date:</strong> {activeLoan.dueDate ? new Date(activeLoan.dueDate).toLocaleDateString() : 'TBD'}</li>
+                      </ul>
+                    </div>
+                  </div>
+                </div>
+                <div className="col-md-6">
+                  <div className="card bg-light">
+                    <div className="card-body">
+                      <h5>Payment Progress</h5>
+                      <div className="progress mb-3" style={{height: '20px'}}>
+                        <div 
+                          className="progress-bar bg-success" 
+                          style={{width: `${((activeLoan.totalAmount - remainingBalance) / activeLoan.totalAmount) * 100}%`}}
+                        >
+                          {Math.round(((activeLoan.totalAmount - remainingBalance) / activeLoan.totalAmount) * 100)}%
+                        </div>
+                      </div>
+                      <p><strong>Paid:</strong> GHS {(activeLoan.totalAmount - remainingBalance)?.toLocaleString()}</p>
+                    </div>
+                  </div>
+                </div>
+              </div>
+              
+              <div className="text-center mt-4">
+                <button className="btn btn-success btn-lg me-3" onClick={handleMakePayment}>
+                  💰 Make Payment
+                </button>
+                <button className="btn btn-outline-primary" onClick={() => navigate('/history')}>
+                  📋 Payment History
+                </button>
+              </div>
+              
+              {activeLoan.isOverdue && (
+                <div className="alert alert-warning mt-4">
+                  <strong>⚠️ Overdue Notice:</strong> Your loan is {activeLoan.overdueDays} days overdue. 
+                  Additional fees may apply. Please make a payment as soon as possible.
+                </div>
+              )}
+            </div>
+          </div>
+        </div>
+      </div>
+    </div>
+  );
+
+  // Completed loan screen
+  const renderCompletedScreen = () => (
+    <div className="container mt-4">
+      <div className="row justify-content-center">
+        <div className="col-md-8">
+          <div className="card shadow-sm border-success">
+            <div className="card-body text-center py-5">
+              <div className="text-success mb-4">
+                <i className="fas fa-trophy" style={{fontSize: '4rem'}}></i>
+              </div>
+              <h3 className="text-success mb-3">🎉 Loan Completed!</h3>
+              <p className="lead mb-4">Congratulations! You have successfully repaid your loan.</p>
+              
+              <div className="alert alert-success">
+                <strong>✅ Well Done!</strong> Your successful repayment has been recorded and may help improve your loan level.
+              </div>
+              
+              <div className="mt-4">
+                <button 
+                  className="btn btn-primary btn-lg me-3" 
+                  onClick={() => {
+                    setActiveLoan(null);
+                    setLoanStatus(null);
+                    showToast('You can now apply for a new loan with potentially better terms!', 'success');
+                  }}
+                >
+                  🆕 Apply for New Loan
+                </button>
+                <button className="btn btn-outline-secondary" onClick={() => navigate('/history')}>
+                  📋 View History
+                </button>
+              </div>
+            </div>
+          </div>
+        </div>
+      </div>
+    </div>
+  );
   
   const handleSubmit = async (e) => {
     e.preventDefault();
     setIsSubmitting(true);
     
     try {
+      // Validate loan amount against user's level limits
+      if (currentLevel && (loanAmount < currentLevel.minAmount || loanAmount > currentLevel.maxAmount)) {
+        showToast(`Loan amount must be between GHS ${currentLevel.minAmount.toLocaleString()} and GHS ${currentLevel.maxAmount.toLocaleString()} for your current level`, 'error');
+        setIsSubmitting(false);
+        return;
+      }
+      
       const fees = calculateFees();
       const totalRepayment = calculateTotalRepayment();
       
       const loanData = {
         amount: loanAmount,
-        duration: Math.ceil(loanTerm / 30), // Convert days to months
+        duration: Math.ceil(selectedTerm / 30), // Convert days to months
+        termInDays: selectedTerm,
         purpose: 'other', // Valid enum value from backend
-        termsAccepted: termsAccepted
+        termsAccepted: termsAccepted,
+        loanLevel: currentLevel?.levelNumber || 1
       };
       
-      await loansAPI.applyForLoan(loanData);
-      setLoanStatus('under_review');
-      showToast('Loan application submitted successfully!', 'success');
-      navigate('/history');
+      const response = await loansAPI.applyForLoan(loanData);
+      const newLoan = response.data.loan;
+      
+      // Set the active loan and status
+      setActiveLoan(newLoan);
+      setLoanStatus(newLoan.status);
+      
+      // Show appropriate message based on status
+      if (newLoan.status === 'approved') {
+        showToast('🎉 Congratulations! Your loan has been auto-approved!', 'success');
+      } else {
+        showToast('✅ Loan application submitted successfully! Please wait for review.', 'success');
+      }
+      
+      // Don't navigate away - stay on the page to show status
     } catch (error) {
       showToast(error.message || 'Failed to submit loan application', 'error');
     } finally {
@@ -189,7 +565,8 @@ const LoanApplication = () => {
   
 
   
-  return (
+  // Main loan application form (when no active loan)
+  const renderLoanApplicationForm = () => (
     <div className="container mt-4">
       <div className="page-header">
         <button 
@@ -199,7 +576,13 @@ const LoanApplication = () => {
           ← Back
         </button>
         <h1 className="page-title">Apply for a Loan</h1>
-        <p className="page-subtitle">Get instant loans up to GHS 5,000</p>
+        <p className="page-subtitle">
+          {currentLevel ? (
+            <>Get instant loans from GHS {minAmount.toLocaleString()} to GHS {maxAmount.toLocaleString()} - {currentLevel.name} Level</>
+          ) : (
+            'Loading loan information...'
+          )}
+        </p>
       </div>
       
       <form onSubmit={handleSubmit}>
@@ -213,17 +596,23 @@ const LoanApplication = () => {
             <div className="mb-4">
               <input
                 type="range"
-                min="100"
-                max="5000"
-                step="100"
+                min={minAmount}
+                max={maxAmount}
+                step="50"
                 value={loanAmount}
                 onChange={handleSliderChange}
                 className="form-range"
+                disabled={!currentLevel}
               />
               <div className="d-flex justify-content-between mt-2">
-                <small className="text-muted">GHS 100</small>
-                <small className="text-muted">GHS 5,000</small>
+                <small className="text-muted">GHS {minAmount.toLocaleString()}</small>
+                <small className="text-muted">GHS {maxAmount.toLocaleString()}</small>
               </div>
+              {currentLevel && (
+                <div className="text-center mt-2">
+                  <small className="badge bg-primary">{currentLevel.name} Level</small>
+                </div>
+              )}
             </div>
           </div>
         </div>
@@ -262,6 +651,49 @@ const LoanApplication = () => {
             </div>
           </div>
         </div>
+        
+        {/* Loan Level Information */}
+        {userLevelInfo && (
+          <div className="card custom-card">
+            <div className="card-body">
+              <h3 className="card-title text-warning mb-4">🏆 Your Loan Level</h3>
+              <div className="row mb-3">
+                <div className="col-md-6">
+                  <div className="text-center p-3 bg-light rounded">
+                    <h5 className="text-primary mb-1">{currentLevel?.name}</h5>
+                    <small className="text-muted">Level {currentLevel?.levelNumber}</small>
+                    <div className="mt-2">
+                      <small className="d-block">Loan Range: GHS {currentLevel?.minAmount?.toLocaleString()} - GHS {currentLevel?.maxAmount?.toLocaleString()}</small>
+                      <small className="d-block">Interest Rate: {currentLevel?.interestRate}%</small>
+                    </div>
+                  </div>
+                </div>
+                <div className="col-md-6">
+                  <div className="p-3">
+                    <h6 className="mb-2">Progress to Next Level:</h6>
+                    <div className="mb-2">
+                      <small className="text-muted">Loans Completed: {userLevelInfo.totalLoansCompleted} / {currentLevel?.minLoansRequired || 'N/A'}</small>
+                      <div className="progress" style={{height: '6px'}}>
+                        <div 
+                          className="progress-bar bg-success" 
+                          style={{width: `${Math.min(100, (userLevelInfo.totalLoansCompleted / (currentLevel?.minLoansRequired || 1)) * 100)}%`}}
+                        ></div>
+                      </div>
+                    </div>
+                    <div className="mb-2">
+                      <small className="text-muted">Amount Repaid: GHS {userLevelInfo.totalAmountRepaid?.toLocaleString() || '0'}</small>
+                    </div>
+                    {userLevelInfo.canProgress && (
+                      <div className="alert alert-success py-2 px-3 mb-0">
+                        <small>🎉 Ready for next level!</small>
+                      </div>
+                    )}
+                  </div>
+                </div>
+              </div>
+            </div>
+          </div>
+        )}
         
         <div className="card custom-card">
           <div className="card-body">
@@ -595,6 +1027,8 @@ const LoanApplication = () => {
       )}
     </div>
   );
+
+  return renderLoanStatusScreen();
 };
 
 export default LoanApplication;

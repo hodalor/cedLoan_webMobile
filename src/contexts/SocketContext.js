@@ -24,7 +24,10 @@ export const SocketProvider = ({ children }) => {
       // Initialize socket connection
       const newSocket = io(process.env.REACT_APP_API_URL || 'http://localhost:5000', {
         transports: ['websocket', 'polling'],
-        withCredentials: true
+        withCredentials: true,
+        forceNew: true,
+        reconnection: true,
+        timeout: 5000
       });
 
       newSocket.on('connect', () => {
@@ -62,6 +65,14 @@ export const SocketProvider = ({ children }) => {
       newSocket.on('connect_error', (error) => {
         console.error('🔌 Socket connection error:', error);
         setIsConnected(false);
+        if (error.message && error.message.includes('namespace')) {
+          console.log('🔧 Namespace error detected, attempting reconnection...');
+        }
+      });
+
+      // Handle general errors
+      newSocket.on('error', (error) => {
+        console.error('🔌 Socket error:', error);
       });
 
       setSocket(newSocket);
