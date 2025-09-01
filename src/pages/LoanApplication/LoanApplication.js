@@ -15,6 +15,7 @@ const LoanApplication = () => {
   const [activeLoan, setActiveLoan] = useState(null);
   const [isSubmitting, setIsSubmitting] = useState(false);
   const [termsAccepted, setTermsAccepted] = useState(false);
+  console.log('🔥🔥🔥 COMPONENT STATE - termsAccepted:', termsAccepted);
   const [remainingBalance, setRemainingBalance] = useState(0);
   const [paymentHistory, setPaymentHistory] = useState([]);
   const [showPaymentModal, setShowPaymentModal] = useState(false);
@@ -53,19 +54,25 @@ const LoanApplication = () => {
   // Check for existing active loans
   const checkActiveLoan = async () => {
     try {
+      console.log('🔍 Checking for active loans...');
       const response = await loansAPI.getUserLoans();
       const loans = response.data.loans || [];
+      console.log('📋 All user loans:', loans);
       
       // Find any active loan (pending, under-review, approved, disbursed, active)
       const activeLoanFound = loans.find(loan => 
         ['pending', 'under-review', 'approved', 'disbursed', 'active'].includes(loan.status)
       );
       
+      console.log('🎯 Active loan found:', activeLoanFound);
+      
       if (activeLoanFound) {
+        console.log('✅ Setting active loan state:', activeLoanFound.status);
         setActiveLoan(activeLoanFound);
         setLoanStatus(activeLoanFound.status);
         setRemainingBalance(activeLoanFound.remainingBalance || activeLoanFound.totalAmount);
       } else {
+        console.log('❌ No active loan found, clearing state');
         setActiveLoan(null);
         setLoanStatus(null);
       }
@@ -178,7 +185,11 @@ const LoanApplication = () => {
 
   // Render different screens based on loan status
   const renderLoanStatusScreen = () => {
+    console.log('🖥️ Rendering loan status screen - isLoading:', isLoading, 'activeLoan:', activeLoan, 'loanStatus:', loanStatus);
+    console.log('🔍 Function called with current state');
+    
     if (isLoading) {
+      console.log('📊 Showing loading screen');
       return (
         <div className="text-center py-5">
           <div className="spinner-border text-primary" role="status">
@@ -190,23 +201,33 @@ const LoanApplication = () => {
     }
 
     if (!activeLoan) {
+      console.log('📝 No active loan - showing application form');
       return renderLoanApplicationForm();
     }
 
+    console.log('🎯 Active loan found with status:', activeLoan.status);
+    console.log('📋 About to render status-specific screen');
+    
     switch (activeLoan.status) {
       case 'pending':
       case 'under-review':
+        console.log('⏳ Showing pending screen');
         return renderPendingScreen();
       case 'approved':
+        console.log('✅ Showing approved screen');
         return renderApprovedScreen();
       case 'rejected':
+        console.log('❌ Showing rejected screen');
         return renderRejectedScreen();
       case 'active':
       case 'disbursed':
+        console.log('💰 Showing active repayment screen');
         return renderActiveRepaymentScreen();
       case 'completed':
+        console.log('🎉 Showing completed screen');
         return renderCompletedScreen();
       default:
+        console.log('🔄 Default case - showing application form');
         return renderLoanApplicationForm();
     }
   };
@@ -461,8 +482,12 @@ const LoanApplication = () => {
   );
   
   const handleSubmit = async (e) => {
+    console.log('🔥🔥🔥 HANDLESUBMIT FUNCTION CALLED!');
     e.preventDefault();
     setIsSubmitting(true);
+    
+    console.log('🚀 Starting loan application submission...');
+    console.log('Current state:', { loanAmount, selectedTerm, termsAccepted, currentLevel });
     
     try {
       // Validate loan amount against user's level limits
@@ -484,12 +509,18 @@ const LoanApplication = () => {
         loanLevel: currentLevel?.levelNumber || 1
       };
       
+      console.log('📤 Sending loan data:', loanData);
+      
       const response = await loansAPI.applyForLoan(loanData);
       const newLoan = response.data.loan;
+      
+      console.log('📥 Received loan response:', newLoan);
       
       // Set the active loan and status
       setActiveLoan(newLoan);
       setLoanStatus(newLoan.status);
+      
+      console.log('✅ Updated state - activeLoan:', newLoan, 'loanStatus:', newLoan.status);
       
       // Show appropriate message based on status
       if (newLoan.status === 'approved') {
@@ -498,8 +529,15 @@ const LoanApplication = () => {
         showToast('✅ Loan application submitted successfully! Please wait for review.', 'success');
       }
       
+      // Force a re-check of active loans to ensure consistency
+      setTimeout(() => {
+        console.log('🔄 Calling checkActiveLoan after timeout...');
+        checkActiveLoan();
+      }, 1000);
+      
       // Don't navigate away - stay on the page to show status
     } catch (error) {
+      console.error('❌ Loan application error:', error);
       showToast(error.message || 'Failed to submit loan application', 'error');
     } finally {
       setIsSubmitting(false);
@@ -585,7 +623,12 @@ const LoanApplication = () => {
         </p>
       </div>
       
-      <form onSubmit={handleSubmit}>
+      <form onSubmit={(e) => {
+          console.log('🔥🔥🔥 FORM ONSUBMIT TRIGGERED! Terms accepted:', termsAccepted);
+          console.log('🔥🔥🔥 Event:', e);
+          console.log('🔥🔥🔥 About to call handleSubmit...');
+          handleSubmit(e);
+        }}>
         <div className="card custom-card">
           <div className="card-body">
             <h3 className="card-title text-primary mb-4">💰 Loan Amount</h3>
@@ -804,7 +847,10 @@ const LoanApplication = () => {
                    type="checkbox" 
                    id="termsCheck"
                    checked={termsAccepted}
-                   onChange={(e) => setTermsAccepted(e.target.checked)}
+                   onChange={(e) => {
+                     console.log('✅ Terms checkbox clicked:', e.target.checked);
+                     setTermsAccepted(e.target.checked);
+                   }}
                  />
                  <label className="form-check-label" htmlFor="termsCheck">
                    I have read and agree to the Terms and Conditions
@@ -817,6 +863,8 @@ const LoanApplication = () => {
 
         
         <div className="d-grid gap-2 mt-4 page-bottom-actions">
+
+          
           {loanStatus === 'approved' ? (
             <div>
               <div className="alert alert-info mb-3">
@@ -857,14 +905,19 @@ const LoanApplication = () => {
             <button 
                type="submit" 
                className="btn btn-primary btn-lg btn-custom"
-               disabled={isSubmitting || loanStatus === 'under_review' || !termsAccepted}
+               disabled={isSubmitting || loanStatus === 'under-review' || !termsAccepted}
+               onClick={() => {
+                 console.log('🔥🔥🔥 SUBMIT BUTTON CLICKED!');
+                 console.log('🔥🔥🔥 Button state:', { isSubmitting, loanStatus, termsAccepted });
+                 console.log('🔥🔥🔥 Button disabled?', isSubmitting || loanStatus === 'under-review' || !termsAccepted);
+               }}
              >
                {isSubmitting ? (
                  <>
                    <span className="spinner-border spinner-border-sm me-2" role="status"></span>
                    Processing...
                  </>
-               ) : loanStatus === 'under_review' ? (
+               ) : loanStatus === 'under-review' ? (
                  '⏳ Application Under Review'
                ) : !termsAccepted ? (
                  '📋 Accept Terms to Continue'
@@ -1028,7 +1081,14 @@ const LoanApplication = () => {
     </div>
   );
 
-  return renderLoanStatusScreen();
+  // Main render logic
+  console.log('🎨 Main render - isLoading:', isLoading, 'loanStatus:', loanStatus, 'activeLoan:', !!activeLoan);
+  
+  return (
+    <div className="container mt-4">
+      {renderLoanStatusScreen()}
+    </div>
+  );
 };
 
 export default LoanApplication;

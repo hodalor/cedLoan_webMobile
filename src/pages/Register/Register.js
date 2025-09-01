@@ -96,7 +96,8 @@ const Register = () => {
       
       if (result.success) {
         // Check if phone number already exists in database
-        const phoneExists = await checkPhoneExists(phone);
+        const formattedPhone = localStorage.getItem('registrationPhone') || phoneAuthService.formatPhoneNumber(phone);
+        const phoneExists = await checkPhoneExists(formattedPhone);
         
         if (phoneExists) {
           setError('This phone number is already registered. Please login instead.');

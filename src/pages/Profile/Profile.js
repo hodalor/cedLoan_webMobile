@@ -20,16 +20,16 @@ const Profile = () => {
       try {
         setIsLoading(true);
         const profileResponse = await usersAPI.getProfile();
-        const profile = profileResponse.profile || profileResponse;
+        const profile = profileResponse.user || profileResponse.profile || profileResponse;
         
         const userData = {
-          id: authUser.userId || profile._id,
+          id: authUser.userId || authUser.id || profile._id,
           name: profile.personalInfo?.firstName && profile.personalInfo?.lastName 
             ? `${profile.personalInfo.firstName} ${profile.personalInfo.lastName}`
-            : authUser.phoneNumber || 'User',
-          email: profile.personalInfo?.email || 'Not provided',
-          phone: authUser.phoneNumber || profile.personalInfo?.phoneNumber || 'Not provided',
-          idVerified: profile.idVerification?.verified || false,
+            : authUser.phoneNumber || profile.phoneNumber || 'User',
+          email: profile.personalInfo?.email || profile.email || 'Not provided',
+          phone: profile.phoneNumber || authUser.phoneNumber || 'Not provided',
+          idVerified: profile.idVerification?.verified || profile.idVerification?.isVerified || false,
           accountCreated: new Date(profile.createdAt || authUser.createdAt || Date.now()),
           creditScore: profile.creditScore || 0
         };
@@ -153,6 +153,7 @@ const Profile = () => {
               </div>
             </div>
             
+
             <div className="row g-3 page-bottom-actions">
               <div className="col-md-4">
                 <button className="btn btn-outline-primary btn-custom w-100" onClick={() => navigate('/edit-profile')}>

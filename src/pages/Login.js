@@ -1,6 +1,7 @@
 import React, { useState } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { toast } from 'react-toastify';
+import { useAuth } from '../contexts/AuthContext';
 
 const Login = () => {
   const [phone, setPhone] = useState('');
@@ -9,6 +10,7 @@ const Login = () => {
   const [error, setError] = useState('');
   const [showPin, setShowPin] = useState(false);
   const navigate = useNavigate();
+  const { login } = useAuth();
 
   // Format phone number to include +233 prefix
   const formatPhoneNumber = (phoneNumber) => {
@@ -51,27 +53,17 @@ const Login = () => {
       // Format phone number with +233 prefix
       const formattedPhone = formatPhoneNumber(phone);
       
-      const response = await fetch(`${process.env.REACT_APP_API_URL}/auth/login`, {
-        method: 'POST',
-        headers: {
-          'Content-Type': 'application/json',
-        },
-        body: JSON.stringify({ phone: formattedPhone, pin }),
+      const result = await login({
+        phone: formattedPhone,
+        pin: pin
       });
       
-      const data = await response.json();
-      
-      if (data.success) {
-        // Store user data and token
-        localStorage.setItem('token', data.token);
-        localStorage.setItem('user', JSON.stringify(data.user));
-        localStorage.setItem('isAuthenticated', 'true');
-        
+      if (result.success) {
         toast.success('Login successful! Welcome back.');
         navigate('/home');
       } else {
-        setError(data.message || 'Invalid credentials');
-        toast.error(data.message || 'Invalid credentials');
+        setError(result.error || 'Invalid credentials');
+        toast.error(result.error || 'Invalid credentials');
       }
     } catch (error) {
       console.error('Login error:', error);
