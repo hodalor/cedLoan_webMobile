@@ -1,6 +1,6 @@
 import React, { useState } from 'react';
 import { useNavigate } from 'react-router-dom';
-import { usersAPI } from '../../services/api';
+import { toast } from 'react-toastify';
 
 const EmergencyContacts = () => {
   const [contacts, setContacts] = useState([
@@ -93,12 +93,16 @@ const EmergencyContacts = () => {
     setLoading(true);
     
     try {
-      await usersAPI.updateEmergencyContacts(contacts);
+      // Save emergency contacts to localStorage (same pattern as other registration steps)
       localStorage.setItem('emergencyContacts', JSON.stringify(contacts));
+      
+      toast.success('Emergency contacts saved!');
+      
+      // Navigate to next step - ID Verification
       navigate('/id-verification');
     } catch (error) {
-      console.error('Error updating emergency contacts:', error);
-      alert('Failed to save emergency contacts. Please try again.');
+      console.error('Error saving emergency contacts:', error);
+      toast.error('Failed to save emergency contacts. Please try again.');
     } finally {
       setLoading(false);
     }
