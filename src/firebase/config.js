@@ -2,15 +2,21 @@
 import { initializeApp } from 'firebase/app';
 import { getAuth } from 'firebase/auth';
 
-// Firebase config object - these values should be set in environment variables
+// Firebase config object - using environment variables
 const firebaseConfig = {
-  apiKey: "AIzaSyC7bNVhzAkhN7H0QfcaN-zlPmLpcUx5xvg",
-  authDomain: "quickmula.firebaseapp.com",
-  projectId: "quickmula",
-  storageBucket: "quickmula.firebasestorage.app",
-  messagingSenderId: "423575236253",
-  appId: "1:423575236253:web:d61c6f9120ca5a03dbae74"
+  apiKey: process.env.REACT_APP_FIREBASE_API_KEY,
+  authDomain: process.env.REACT_APP_FIREBASE_AUTH_DOMAIN,
+  projectId: process.env.REACT_APP_FIREBASE_PROJECT_ID,
+  storageBucket: process.env.REACT_APP_FIREBASE_STORAGE_BUCKET,
+  messagingSenderId: process.env.REACT_APP_FIREBASE_MESSAGING_SENDER_ID,
+  appId: process.env.REACT_APP_FIREBASE_APP_ID
 };
+
+// Validate Firebase configuration
+if (!firebaseConfig.apiKey || !firebaseConfig.authDomain || !firebaseConfig.projectId) {
+  console.error('Firebase configuration is incomplete. Please check your environment variables.');
+  throw new Error('Firebase configuration is incomplete');
+}
 
 
 // Initialize Firebase

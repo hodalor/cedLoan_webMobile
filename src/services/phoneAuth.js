@@ -117,6 +117,9 @@ class PhoneAuthService {
         case 'auth/captcha-check-failed':
           errorMessage = 'reCAPTCHA verification failed. Please try again';
           break;
+        case 'auth/invalid-app-credential':
+          errorMessage = 'Firebase configuration error. Please ensure your domain is authorized in Firebase console and try using 127.0.0.1 instead of localhost';
+          break;
         default:
           errorMessage = error.message || 'Failed to send verification code';
       }
