@@ -155,17 +155,17 @@ const Profile = () => {
             
 
             <div className="row g-3 page-bottom-actions">
-              <div className="col-md-4">
+              <div className="col-md-4 col-lg-12 col-xl-12">
                 <button className="btn btn-outline-primary btn-custom w-100" onClick={() => navigate('/edit-profile')}>
                   ✏️ Edit Profile
                 </button>
               </div>
-              <div className="col-md-4">
+              <div className="col-md-4 col-lg-12 col-xl-12">
                 <button className="btn btn-outline-secondary btn-custom w-100" onClick={() => navigate('/change-password')}>
                   🔒 Change Password
                 </button>
               </div>
-              <div className="col-md-4">
+              <div className="col-md-4 col-lg-12 col-xl-12">
                 <button className="btn btn-outline-danger btn-custom w-100" onClick={handleLogout}>
                   🚪 Logout
                 </button>
