@@ -23,7 +23,7 @@ const Profile = () => {
         const profile = profileResponse.user || profileResponse.profile || profileResponse;
         
         const userData = {
-          id: authUser.userId || authUser.id || profile._id,
+          id: authUser.userId || profile.userId || authUser.id || profile._id,
           name: profile.personalInfo?.firstName && profile.personalInfo?.lastName 
             ? `${profile.personalInfo.firstName} ${profile.personalInfo.lastName}`
             : authUser.phoneNumber || profile.phoneNumber || 'User',

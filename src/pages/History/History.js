@@ -29,7 +29,7 @@ const History = () => {
         // Add loan transactions
         loans.forEach(loan => {
           allTransactions.push({
-            id: loan._id,
+            id: loan.loanId || loan._id,
             type: 'loan',
             amount: loan.amount,
             currency: 'GHS',
@@ -90,7 +90,7 @@ const History = () => {
             // Add loan transactions
             loans.forEach(loan => {
               allTransactions.push({
-                id: loan._id,
+                id: loan.loanId || loan._id,
                 type: 'loan',
                 amount: loan.amount,
                 currency: 'GHS',

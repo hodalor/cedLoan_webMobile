@@ -12,10 +12,10 @@ html, body {
 
 /* Custom CEDI Colors */
 :root {
-  --cedi-blue: #4bd57b;
+  --cedi-blue: #f5f5f5;
   --cedi-gold: #f5b769;
   --cedi-light: #E6F0FF;
-  --cedi-dark: #41bfca;
+  --cedi-dark: #ffffff;
   --cedi-shadow: rgba(158, 181, 213, 0.3);
 }
 
