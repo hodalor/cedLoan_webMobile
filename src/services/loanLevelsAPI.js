@@ -153,6 +153,40 @@ export const loanLevelsAPI = {
       console.error('Error bulk updating terms:', error);
       throw error;
     }
+  },
+
+  // Loan Terms API functions
+  // Get all active loan terms
+  getAllLoanTerms: async () => {
+    try {
+      const response = await api.get('/loan-terms');
+      return response.data;
+    } catch (error) {
+      console.error('Error fetching loan terms:', error);
+      throw error;
+    }
+  },
+
+  // Get available loan terms for current user based on their level
+  getUserAvailableTerms: async () => {
+    try {
+      const response = await api.get('/loan-terms/available');
+      return response.data;
+    } catch (error) {
+      console.error('Error fetching user available terms:', error);
+      throw error;
+    }
+  },
+
+  // Get specific loan term details
+  getLoanTermById: async (termId) => {
+    try {
+      const response = await api.get(`/loan-terms/${termId}`);
+      return response.data;
+    } catch (error) {
+      console.error('Error fetching loan term:', error);
+      throw error;
+    }
   }
 };
 

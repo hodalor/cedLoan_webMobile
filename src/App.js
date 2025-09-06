@@ -19,6 +19,7 @@ import Home from './pages/Home/Home';
 import LoanApplication from './pages/LoanApplication/LoanApplication';
 import History from './pages/History/History';
 import Profile from './pages/Profile/Profile';
+import LoanRateCalculation from './pages/LoanRateCalculation/LoanRateCalculation';
 
 
 // Import components
@@ -30,13 +31,15 @@ import ToastContainer from './components/Toast/ToastContainer';
 import { AuthProvider } from './contexts/AuthContext';
 import { SocketProvider } from './contexts/SocketContext';
 import { ToastProvider } from './contexts/ToastContext';
+import { ConfigProvider } from './contexts/ConfigContext';
 
 function App() {
   return (
     <ToastProvider>
       <AuthProvider>
         <SocketProvider>
-        <Router>
+          <ConfigProvider>
+            <Router>
           <div className="app-container">
             <Routes>
             {/* Public Routes */}
@@ -88,16 +91,24 @@ function App() {
               </ProtectedRoute>
             } />
 
-
+            <Route path="/loan-rate-calculation" element={
+              <ProtectedRoute>
+                <div className="page-container">
+                  <LoanRateCalculation />
+                  <BottomNavigation />
+                </div>
+              </ProtectedRoute>
+            } />
 
             {/* Default redirect to login */}
             <Route path="*" element={<Navigate to="/login" />} />
           </Routes>
           <ToastContainer />
-        </div>
-      </Router>
-      </SocketProvider>
-    </AuthProvider>
+            </div>
+            </Router>
+          </ConfigProvider>
+        </SocketProvider>
+      </AuthProvider>
     </ToastProvider>
   );
 }

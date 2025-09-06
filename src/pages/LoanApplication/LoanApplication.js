@@ -2,12 +2,16 @@ import React, { useState, useEffect } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { useToast } from '../../contexts/ToastContext';
 import { useSocket } from '../../contexts/SocketContext';
+import { useConfig } from '../../contexts/ConfigContext';
 import { loansAPI } from '../../services/api';
 import { loanLevelsAPI } from '../../services/loanLevelsAPI';
+import configAPI from '../../services/configAPI';
+import LoanTermsCarousel from '../../components/LoanTermsCarousel';
 
 const LoanApplication = () => {
   const navigate = useNavigate();
   const { showToast } = useToast();
+  const { getLoanConfig, loading: configLoading } = useConfig();
   useSocket(); // Initialize socket connection
   const [loanAmount, setLoanAmount] = useState(100);
   const [loanTerm, setLoanTerm] = useState(14);
@@ -20,6 +24,8 @@ const LoanApplication = () => {
   const [paymentHistory, setPaymentHistory] = useState([]);
   const [showPaymentModal, setShowPaymentModal] = useState(false);
   const [availableTerms, setAvailableTerms] = useState([7, 14, 30]);
+  const [dynamicFees, setDynamicFees] = useState(null);
+  const [isCalculatingFees, setIsCalculatingFees] = useState(false);
   const [selectedTerm, setSelectedTerm] = useState(7);
   const [isLoading, setIsLoading] = useState(true);
   const [userLevelInfo, setUserLevelInfo] = useState(null);
@@ -120,60 +126,107 @@ const LoanApplication = () => {
     fetchUserData();
   }, [showToast]);
   
-  // Fee structure based on local law compliance
-  const calculateFees = () => {
-    let interestRate = 0;
-    let serviceFeeRate = 20; // 20%
-    let adminFeeRate = 10; // 10%
-    let commitmentFeeRate = 6; // 6%
-    
-    // Set interest rates based on loan term
-    if (loanTerm === 7) {
-      interestRate = 1; // 1% for 7 days
-      // Target: 22% total (1% interest + 21% other fees)
-      let targetOtherFees = 22 - interestRate;
-      let adjustmentFactor = targetOtherFees / (serviceFeeRate + adminFeeRate + commitmentFeeRate);
-      serviceFeeRate *= adjustmentFactor;
-      adminFeeRate *= adjustmentFactor;
-      commitmentFeeRate *= adjustmentFactor;
-    } else if (loanTerm === 14) {
-      interestRate = 2; // 2% for 14 days
-      // Target: 26% total (2% interest + 24% other fees)
-      let targetOtherFees = 26 - interestRate;
-      let adjustmentFactor = targetOtherFees / (serviceFeeRate + adminFeeRate + commitmentFeeRate);
-      serviceFeeRate *= adjustmentFactor;
-      adminFeeRate *= adjustmentFactor;
-      commitmentFeeRate *= adjustmentFactor;
-    } else if (loanTerm === 30) {
-      interestRate = 4; // 4% for 30 days
-      // Target: 30% total (4% interest + 26% other fees)
-      let targetOtherFees = 30 - interestRate;
-      let adjustmentFactor = targetOtherFees / (serviceFeeRate + adminFeeRate + commitmentFeeRate);
-      serviceFeeRate *= adjustmentFactor;
-      adminFeeRate *= adjustmentFactor;
-      commitmentFeeRate *= adjustmentFactor;
+  // Dynamic fee calculation using configAPI
+  const calculateDynamicFees = async (amount, term) => {
+    setIsCalculatingFees(true);
+    try {
+      const result = await configAPI.calculateLoanFees(amount, term);
+      if (result.success) {
+        const fees = {
+          interestAmount: result.data.fees.interest,
+          serviceFee: result.data.fees.service,
+          processingFee: result.data.fees.processing || result.data.fees.admin,
+          commitmentFee: result.data.fees.commitment,
+          totalFees: result.data.fees.total
+        };
+        setDynamicFees(fees);
+        setIsCalculatingFees(false);
+        return fees;
+      }
+    } catch (error) {
+      console.error('Error calculating dynamic fees:', error);
     }
     
-    // Calculate actual amounts
-    const interestAmount = loanAmount * interestRate / 100;
-    const adjustedServiceFee = loanAmount * serviceFeeRate / 100;
-    const adjustedAdminFee = loanAmount * adminFeeRate / 100;
-    const adjustedCommitmentFee = loanAmount * commitmentFeeRate / 100;
+    // Fallback to static calculation if dynamic fails
+    const fallbackFees = calculateStaticFees(amount, term);
+    setDynamicFees(fallbackFees);
+    setIsCalculatingFees(false);
+    return fallbackFees;
+  };
+  
+  // Dynamic fee calculation using configuration
+  const calculateStaticFees = (amount, term) => {
+    // Get dynamic rates from configuration
+    const interestRate = getLoanConfig(term, 'interest_rate') || 0;
+    const serviceFeeRate = getLoanConfig(term, 'service_fee') || 0;
+    const processingFeeRate = getLoanConfig(term, 'processing_fee') || getLoanConfig(term, 'admin_fee') || 0;
+    const commitmentFeeRate = getLoanConfig(term, 'commitment_fee') || 0;
+    
+    const interestAmount = amount * interestRate / 100;
+    const serviceFee = amount * serviceFeeRate / 100;
+    const processingFee = amount * processingFeeRate / 100;
+    const commitmentFee = amount * commitmentFeeRate / 100;
     
     return {
       interestAmount,
-      serviceFee: adjustedServiceFee,
-      adminFee: adjustedAdminFee,
-      commitmentFee: adjustedCommitmentFee,
-      totalFees: interestAmount + adjustedServiceFee + adjustedAdminFee + adjustedCommitmentFee
+      serviceFee,
+      processingFee,
+      commitmentFee,
+      totalFees: interestAmount + serviceFee + processingFee + commitmentFee
     };
+  };
+  
+  // Get current fees (dynamic or fallback)
+  const getCurrentFees = () => {
+    return dynamicFees || calculateStaticFees(loanAmount, loanTerm);
   };
   
   // Calculate total repayment amount
   const calculateTotalRepayment = () => {
-    const fees = calculateFees();
+    const fees = getCurrentFees();
     return loanAmount + fees.totalFees;
   };
+  
+  // Effect to recalculate fees when amount, term, or configuration changes
+  useEffect(() => {
+    if (loanAmount > 0 && loanTerm > 0 && !configLoading) {
+      calculateDynamicFees(loanAmount, loanTerm);
+    }
+  }, [loanAmount, loanTerm, configLoading]);
+
+  // Listen for real-time configuration updates
+  useEffect(() => {
+    const handleConfigUpdate = (event) => {
+      const { key } = event.detail;
+      // Check if the updated config affects loan calculations
+      if (key.includes('interest_rate') || key.includes('service_fee') || 
+          key.includes('processing_fee') || key.includes('admin_fee') || key.includes('commitment_fee')) {
+        console.log('⚙️ Loan configuration updated, recalculating fees...');
+        // Recalculate fees with new configuration
+        if (loanAmount > 0 && loanTerm > 0) {
+          calculateDynamicFees(loanAmount, loanTerm);
+        }
+      }
+    };
+
+    const handleBulkConfigUpdate = () => {
+      console.log('⚙️ Bulk configuration update, recalculating fees...');
+      // Recalculate fees after bulk update
+      if (loanAmount > 0 && loanTerm > 0) {
+        calculateDynamicFees(loanAmount, loanTerm);
+      }
+    };
+
+    window.addEventListener('configUpdate', handleConfigUpdate);
+    window.addEventListener('bulkConfigUpdate', handleBulkConfigUpdate);
+    window.addEventListener('systemConfigUpdate', handleBulkConfigUpdate);
+
+    return () => {
+      window.removeEventListener('configUpdate', handleConfigUpdate);
+      window.removeEventListener('bulkConfigUpdate', handleBulkConfigUpdate);
+      window.removeEventListener('systemConfigUpdate', handleBulkConfigUpdate);
+    };
+  }, [loanAmount, loanTerm]);
   
   const handleSliderChange = (e) => {
     setLoanAmount(parseInt(e.target.value));
@@ -188,14 +241,14 @@ const LoanApplication = () => {
     console.log('🖥️ Rendering loan status screen - isLoading:', isLoading, 'activeLoan:', activeLoan, 'loanStatus:', loanStatus);
     console.log('🔍 Function called with current state');
     
-    if (isLoading) {
+    if (isLoading || configLoading) {
       console.log('📊 Showing loading screen');
       return (
         <div className="text-center py-5">
           <div className="spinner-border text-primary" role="status">
             <span className="visually-hidden">Loading...</span>
           </div>
-          <p className="mt-3">Loading loan information...</p>
+          <p className="mt-3">{configLoading ? 'Loading configuration...' : 'Loading loan information...'}</p>
         </div>
       );
     }
@@ -497,7 +550,7 @@ const LoanApplication = () => {
         return;
       }
       
-      const fees = calculateFees();
+      const fees = getCurrentFees();
       const totalRepayment = calculateTotalRepayment();
       
       const loanData = {
@@ -660,40 +713,19 @@ const LoanApplication = () => {
           </div>
         </div>
         
-        <div className="card custom-card">
-          <div className="card-body">
-            <h3 className="card-title text-success mb-4">📅 Loan Term</h3>
-            <div className="row g-2">
-              <div className="col-4">
-                <button
-                  type="button"
-                  className={`btn w-100 ${loanTerm === 7 ? 'btn-success' : 'btn-outline-success'}`}
-                  onClick={() => handleTermChange(7)}
-                >
-                  7 days
-                </button>
-              </div>
-              <div className="col-4">
-                <button
-                  type="button"
-                  className={`btn w-100 ${loanTerm === 14 ? 'btn-success' : 'btn-outline-success'}`}
-                  onClick={() => handleTermChange(14)}
-                >
-                  14 days
-                </button>
-              </div>
-              <div className="col-4">
-                <button
-                  type="button"
-                  className={`btn w-100 ${loanTerm === 30 ? 'btn-success' : 'btn-outline-success'}`}
-                  onClick={() => handleTermChange(30)}
-                >
-                  30 days
-                </button>
-              </div>
-            </div>
-          </div>
-        </div>
+        <LoanTermsCarousel 
+          selectedTerm={loanTerm}
+          onTermChange={(days, termData) => {
+            setLoanTerm(days);
+            setSelectedTerm(days);
+            // Store term data for fee calculations if available
+            if (termData) {
+              // Update dynamic fees based on selected term
+              calculateDynamicFees(loanAmount, days);
+            }
+          }}
+          userLevel={currentLevel}
+        />
         
         {/* Loan Level Information */}
         {userLevelInfo && (
@@ -748,29 +780,39 @@ const LoanApplication = () => {
             
             {/* Fee Breakdown */}
             <div className="mb-3">
-              <h6 className="text-muted mb-2">Fee Breakdown:</h6>
-              <div className="row mb-2">
-                <div className="col-8">Interest ({loanTerm === 7 ? '1' : loanTerm === 14 ? '2' : '4'}%):</div>
-                <div className="col-4 text-end text-warning">GHS {calculateFees().interestAmount.toFixed(2)}</div>
-              </div>
-              {calculateFees().serviceFee > 0 && (
-                <div className="row mb-2">
-                  <div className="col-8">Service Fee ({((calculateFees().serviceFee / loanAmount) * 100).toFixed(1)}%):</div>
-                  <div className="col-4 text-end text-info">GHS {calculateFees().serviceFee.toFixed(2)}</div>
-                </div>
-              )}
-              {calculateFees().adminFee > 0 && (
-                <div className="row mb-2">
-                  <div className="col-8">Administration Fee ({((calculateFees().adminFee / loanAmount) * 100).toFixed(1)}%):</div>
-                  <div className="col-4 text-end text-info">GHS {calculateFees().adminFee.toFixed(2)}</div>
-                </div>
-              )}
-              {calculateFees().commitmentFee > 0 && (
-                <div className="row mb-2">
-                  <div className="col-8">Commitment Fee ({((calculateFees().commitmentFee / loanAmount) * 100).toFixed(1)}%):</div>
-                  <div className="col-4 text-end text-info">GHS {calculateFees().commitmentFee.toFixed(2)}</div>
-                </div>
-              )}
+              <h6 className="text-muted mb-2">
+                Fee Breakdown:
+                {isCalculatingFees && <span className="spinner-border spinner-border-sm ms-2" role="status"></span>}
+              </h6>
+              {(() => {
+                const fees = getCurrentFees();
+                return (
+                  <>
+                    <div className="row mb-2">
+                      <div className="col-8">Interest ({((fees.interestAmount / loanAmount) * 100).toFixed(1)}%):</div>
+                      <div className="col-4 text-end text-warning">GHS {fees.interestAmount.toFixed(2)}</div>
+                    </div>
+                    {fees.serviceFee > 0 && (
+                      <div className="row mb-2">
+                        <div className="col-8">Service Fee ({((fees.serviceFee / loanAmount) * 100).toFixed(1)}%):</div>
+                        <div className="col-4 text-end text-info">GHS {fees.serviceFee.toFixed(2)}</div>
+                      </div>
+                    )}
+                    {fees.processingFee > 0 && (
+                      <div className="row mb-2">
+                        <div className="col-8">Processing Fee ({((fees.processingFee / loanAmount) * 100).toFixed(1)}%):</div>
+                        <div className="col-4 text-end text-info">GHS {fees.processingFee.toFixed(2)}</div>
+                      </div>
+                    )}
+                    {fees.commitmentFee > 0 && (
+                      <div className="row mb-2">
+                        <div className="col-8">Commitment Fee ({((fees.commitmentFee / loanAmount) * 100).toFixed(1)}%):</div>
+                        <div className="col-4 text-end text-info">GHS {fees.commitmentFee.toFixed(2)}</div>
+                      </div>
+                    )}
+                  </>
+                );
+              })()}
             </div>
             
             <hr />
@@ -786,7 +828,7 @@ const LoanApplication = () => {
             </div>
             <div className="row mb-2">
               <div className="col-6">Total Fee Rate:</div>
-              <div className="col-6 text-end fw-bold text-success">{((calculateFees().totalFees / loanAmount) * 100).toFixed(1)}%</div>
+              <div className="col-6 text-end fw-bold text-success">{((getCurrentFees().totalFees / loanAmount) * 100).toFixed(1)}%</div>
             </div>
             <div className="row">
               <div className="col-6">Due Date:</div>

@@ -1,3 +1,5 @@
+import configAPI from './configAPI';
+
 const API_BASE_URL = process.env.REACT_APP_API_URL || 'http://localhost:5000/api';
 
 // Helper function to get auth token
@@ -364,6 +366,9 @@ export const healthAPI = {
   },
 };
 
+// Export configService
+export const configService = configAPI;
+
 // Export default API object
 const api = {
   auth: authAPI,
@@ -372,6 +377,7 @@ const api = {
   payments: paymentsAPI,
   notifications: notificationsAPI,
   health: healthAPI,
+  config: configAPI,
 };
 
 export default api;

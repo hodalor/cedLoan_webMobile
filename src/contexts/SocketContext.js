@@ -61,6 +61,32 @@ export const SocketProvider = ({ children }) => {
         window.dispatchEvent(new CustomEvent('paymentUpdate', { detail: data }));
       });
 
+      // Listen for system configuration updates
+      newSocket.on('system_config_updated', (data) => {
+        console.log('⚙️ System configuration updated:', data);
+        showInfo(`Configuration updated: ${data.key}`);
+        
+        // Trigger custom event for components to listen to
+        window.dispatchEvent(new CustomEvent('configUpdate', { detail: data }));
+      });
+
+      // Listen for bulk configuration updates
+      newSocket.on('bulk_config_update', (data) => {
+        console.log('⚙️ Bulk configuration update received:', data);
+        showInfo('System configurations have been updated');
+        
+        // Trigger custom event for components to listen to
+        window.dispatchEvent(new CustomEvent('bulkConfigUpdate', { detail: data }));
+      });
+
+      // Listen for general configuration updates
+      newSocket.on('system_config_update', (data) => {
+        console.log('⚙️ Configuration update received:', data);
+        
+        // Trigger custom event for components to listen to
+        window.dispatchEvent(new CustomEvent('systemConfigUpdate', { detail: data }));
+      });
+
       // Handle connection errors
       newSocket.on('connect_error', (error) => {
         console.error('🔌 Socket connection error:', error);
